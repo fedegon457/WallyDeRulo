@@ -1,0 +1,374 @@
+import { useEffect, useState } from 'react'
+import { Plus, Pencil, Trash2, ArrowUpDown, ChevronRight, X, ArrowLeftRight } from 'lucide-react'
+import { supabase } from '../lib/supabase'
+import { useAuth, isDemo } from '../contexts/AuthContext'
+import { demoTransactions, demoCategories, demoPaymentMethods } from '../lib/demoData'
+import { Button } from '../components/ui/Button'
+import { Input, Select } from '../components/ui/Input'
+import { Modal } from '../components/ui/Modal'
+import { CategorySheet } from '../components/ui/CategorySheet'
+import { format } from 'date-fns'
+import { es } from 'date-fns/locale'
+
+function FormRow({ label, onClick, children }) {
+  return (
+    <div
+      onClick={onClick}
+      className={`flex items-center min-h-[52px] border-b border-gray-100 last:border-0 gap-4 ${onClick ? 'cursor-pointer hover:bg-gray-50 rounded-lg -mx-1 px-1' : ''}`}
+    >
+      <span className="text-sm text-gray-400 w-24 flex-shrink-0">{label}</span>
+      <div className="flex-1 flex items-center gap-2 min-w-0">{children}</div>
+    </div>
+  )
+}
+
+function fmt(n) {
+  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+}
+
+function AccountSheet({ title, value, paymentMethods, onChange, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
+          <h3 className="font-semibold text-gray-900">{title}</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+        </div>
+        <div className="overflow-y-auto p-3">
+          <button type="button" onClick={() => { onChange(''); onClose() }}
+            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
+            Sin especificar
+          </button>
+          {paymentMethods.map(m => (
+            <button key={m.id} type="button" onClick={() => { onChange(m.id); onClose() }}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${value === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel }) {
+  const isTransferInitial = initial?.transfer_group_id != null
+  const [type, setType] = useState(isTransferInitial ? 'transfer' : (initial?.type ?? 'expense'))
+  const [amount, setAmount] = useState(initial?.amount ?? '')
+  const [date, setDate] = useState(initial?.date ?? format(new Date(), 'yyyy-MM-dd'))
+  const [categoryId, setCategoryId] = useState(initial?.category_id ?? '')
+  const [paymentMethodId, setPaymentMethodId] = useState(initial?.payment_method_id ?? '')
+  const [fromAccountId, setFromAccountId] = useState('')
+  const [toAccountId, setToAccountId] = useState('')
+  const [notes, setNotes] = useState(initial?.notes ?? '')
+  const [saving, setSaving] = useState(false)
+  const [catOpen, setCatOpen] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const [fromOpen, setFromOpen] = useState(false)
+  const [toOpen, setToOpen] = useState(false)
+
+  const topCats = categories.filter(c => !c.parent_id && c.type === type)
+  const allSubcats = categories.filter(c => c.parent_id && topCats.some(p => p.id === c.parent_id))
+  const visibleCategories = [...topCats, ...allSubcats]
+
+  const selectedCat = categories.find(c => c.id === categoryId)
+  const selectedParent = selectedCat?.parent_id ? categories.find(c => c.id === selectedCat.parent_id) : null
+  const selectedPM = paymentMethods.find(m => m.id === paymentMethodId)
+  const fromAccount = paymentMethods.find(m => m.id === fromAccountId)
+  const toAccount = paymentMethods.find(m => m.id === toAccountId)
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setSaving(true)
+    if (type === 'transfer') {
+      await onSave({ isTransfer: true, amount: parseFloat(amount), date, fromAccountId, toAccountId, notes })
+    } else {
+      await onSave({ type, amount: parseFloat(amount), date, category_id: categoryId || null, payment_method_id: paymentMethodId || null, notes })
+    }
+    setSaving(false)
+  }
+
+  const typeBtn = (t, label, activeClass) => (
+    <button type="button" onClick={() => { setType(t); setCategoryId('') }}
+      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === t ? `bg-white shadow-sm ${activeClass}` : 'text-gray-400'}`}>
+      {label}
+    </button>
+  )
+
+  return (
+    <>
+      <form onSubmit={handleSubmit}>
+        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5">
+          {typeBtn('expense', 'Egreso', 'text-red-600')}
+          {typeBtn('income', 'Ingreso', 'text-emerald-600')}
+          {typeBtn('transfer', 'Transferencia', 'text-blue-600')}
+        </div>
+
+        <div className="mb-5">
+          <FormRow label="Fecha">
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} required
+              className="text-sm text-gray-900 bg-transparent border-none outline-none w-full" />
+          </FormRow>
+
+          <FormRow label="Importe">
+            <span className="text-sm text-gray-400">$</span>
+            <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+              required placeholder="0" autoFocus
+              className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none" />
+          </FormRow>
+
+          {type === 'transfer' ? (
+            <>
+              <FormRow label="De" onClick={() => setFromOpen(true)}>
+                {fromAccount ? <span className="text-sm text-gray-900">{fromAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta origen</span>}
+                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+              </FormRow>
+              <FormRow label="A" onClick={() => setToOpen(true)}>
+                {toAccount ? <span className="text-sm text-gray-900">{toAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta destino</span>}
+                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+              </FormRow>
+            </>
+          ) : (
+            <>
+              <FormRow label="Categoría" onClick={() => setCatOpen(true)}>
+                {selectedCat ? (
+                  <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} › ` : ''}{selectedCat.name}</span>
+                ) : <span className="text-sm text-gray-300">Sin categoría</span>}
+                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+              </FormRow>
+              <FormRow label="Cuenta" onClick={() => setAccountOpen(true)}>
+                {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
+                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+              </FormRow>
+            </>
+          )}
+
+          <FormRow label="Nota">
+            <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
+              placeholder="Descripción..."
+              className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none" />
+          </FormRow>
+        </div>
+
+        <div className="flex gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
+          <Button type="submit" className="flex-1" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+        </div>
+      </form>
+
+      {catOpen && <CategorySheet categories={visibleCategories} value={categoryId} onChange={setCategoryId} onClose={() => setCatOpen(false)} />}
+      {accountOpen && <AccountSheet title="Cuenta" value={paymentMethodId} paymentMethods={paymentMethods} onChange={setPaymentMethodId} onClose={() => setAccountOpen(false)} />}
+      {fromOpen && <AccountSheet title="Cuenta origen" value={fromAccountId} paymentMethods={paymentMethods} onChange={setFromAccountId} onClose={() => setFromOpen(false)} />}
+      {toOpen && <AccountSheet title="Cuenta destino" value={toAccountId} paymentMethods={paymentMethods} onChange={setToAccountId} onClose={() => setToOpen(false)} />}
+    </>
+  )
+}
+
+export function Transacciones() {
+  const { user } = useAuth()
+  const [transactions, setTransactions] = useState([])
+  const [categories, setCategories] = useState([])
+  const [paymentMethods, setPaymentMethods] = useState([])
+  const [modal, setModal] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [filterType, setFilterType] = useState('all')
+  const [filterMonth, setFilterMonth] = useState(format(new Date(), 'yyyy-MM'))
+
+  const load = async () => {
+    if (isDemo(user)) {
+      setTransactions(demoTransactions)
+      setCategories(demoCategories)
+      setPaymentMethods(demoPaymentMethods)
+      setLoading(false)
+      return
+    }
+    const [txRes, catRes, pmRes] = await Promise.all([
+      supabase.from('transactions')
+        .select('*, categories(id, name, parent_id, type, icon), payment_methods(id, name, type)')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false })
+        .order('created_at', { ascending: false }),
+      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
+    ])
+    setTransactions(txRes.data ?? [])
+    setCategories(catRes.data ?? [])
+    setPaymentMethods(pmRes.data ?? [])
+    setLoading(false)
+  }
+
+  useEffect(() => { if (user) load() }, [user])
+
+  const save = async (values) => {
+    if (isDemo(user)) { setModal(null); return }
+    if (values.isTransfer) {
+      const groupId = crypto.randomUUID()
+      const fromName = paymentMethods.find(m => m.id === values.fromAccountId)?.name ?? ''
+      const toName = paymentMethods.find(m => m.id === values.toAccountId)?.name ?? ''
+      await supabase.from('transactions').insert([
+        { user_id: user.id, type: 'expense', amount: values.amount, date: values.date, payment_method_id: values.fromAccountId || null, transfer_group_id: groupId, notes: values.notes || `Transferencia → ${toName}` },
+        { user_id: user.id, type: 'income',  amount: values.amount, date: values.date, payment_method_id: values.toAccountId || null,   transfer_group_id: groupId, notes: values.notes || `Transferencia desde ${fromName}` },
+      ])
+    } else if (modal?.id) {
+      await supabase.from('transactions').update(values).eq('id', modal.id)
+    } else {
+      await supabase.from('transactions').insert({ ...values, user_id: user.id })
+    }
+    setModal(null)
+    load()
+  }
+
+  const remove = async (id) => {
+    if (!confirm('¿Eliminar esta transacción?')) return
+    const tx = transactions.find(t => t.id === id)
+    if (tx?.transfer_group_id) {
+      await supabase.from('transactions').delete().eq('transfer_group_id', tx.transfer_group_id)
+    } else {
+      await supabase.from('transactions').delete().eq('id', id)
+    }
+    load()
+  }
+
+  const filtered = transactions.filter(t => {
+    if (filterType === 'income'   && (t.type !== 'income'  || t.transfer_group_id)) return false
+    if (filterType === 'expense'  && (t.type !== 'expense' || t.transfer_group_id)) return false
+    if (filterType === 'transfer' && !t.transfer_group_id) return false
+    if (filterType === 'all' && false) return false
+    if (filterMonth && !t.date.startsWith(filterMonth)) return false
+    if (search) {
+      const q = search.toLowerCase()
+      return (t.notes ?? '').toLowerCase().includes(q) || (t.categories?.name ?? '').toLowerCase().includes(q)
+    }
+    return true
+  })
+
+  // Deduplicar transfers para no mostrar las dos patas
+  const seenGroups = new Set()
+  const displayList = filtered.filter(t => {
+    if (!t.transfer_group_id) return true
+    if (seenGroups.has(t.transfer_group_id)) return false
+    seenGroups.add(t.transfer_group_id)
+    return true
+  })
+
+  const nonTransfer = filtered.filter(t => !t.transfer_group_id)
+  const totalIncome = nonTransfer.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const totalExpense = nonTransfer.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  return (
+    <div className="p-6 space-y-5 max-w-4xl mx-auto">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Transacciones</h1>
+          <p className="text-gray-500 text-sm">Registrá todos tus movimientos</p>
+        </div>
+        <Button onClick={() => setModal({})} size="md">
+          <Plus size={16} /> Nueva
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
+        <Input
+          className="flex-1 min-w-40"
+          placeholder="Buscar..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <Select value={filterType} onChange={e => setFilterType(e.target.value)} className="min-w-36">
+          <option value="all">Todos</option>
+          <option value="income">Ingresos</option>
+          <option value="expense">Egresos</option>
+          <option value="transfer">Transferencias</option>
+        </Select>
+        <Input type="month" value={filterMonth} onChange={e => setFilterMonth(e.target.value)} className="min-w-36" />
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {[
+          { label: 'Ingresos', value: fmt(totalIncome), color: 'text-emerald-600' },
+          { label: 'Egresos', value: fmt(totalExpense), color: 'text-red-500' },
+          { label: 'Balance', value: fmt(totalIncome - totalExpense), color: totalIncome - totalExpense >= 0 ? 'text-blue-600' : 'text-orange-500' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
+            <p className="text-xs text-gray-400">{s.label}</p>
+            <p className={`font-bold text-base ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
+      </div>
+
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-16 text-gray-400">
+          <ArrowUpDown size={40} className="mx-auto mb-3 opacity-30" />
+          <p>Sin transacciones para mostrar</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="divide-y divide-gray-50">
+            {displayList.map(t => {
+              const isTransfer = !!t.transfer_group_id
+              const cat = categories.find(c => c.id === t.category_id)
+              const parentCat = cat?.parent_id ? categories.find(c => c.id === cat.parent_id) : null
+              const pm = paymentMethods.find(m => m.id === t.payment_method_id)
+              // Para transferencias, buscar la otra pata
+              const partner = isTransfer ? transactions.find(p => p.transfer_group_id === t.transfer_group_id && p.id !== t.id) : null
+              const fromPM = isTransfer && t.type === 'expense' ? pm : (partner ? paymentMethods.find(m => m.id === partner.payment_method_id) : null)
+              const toPM   = isTransfer && t.type === 'income'  ? pm : (partner ? paymentMethods.find(m => m.id === partner.payment_method_id) : null)
+
+              return (
+                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-blue-50' : t.type === 'income' ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    {isTransfer ? <ArrowLeftRight size={18} className="text-blue-500" /> : <span className="text-xl">{cat?.icon || (t.type === 'income' ? '💰' : '💸')}</span>}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900 text-sm truncate">
+                      {isTransfer ? `${fromPM?.name ?? '?'} → ${toPM?.name ?? '?'}` : (t.notes || cat?.name || '—')}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {isTransfer ? 'Transferencia' : `${parentCat ? `${parentCat.name} › ` : ''}${cat?.name ?? ''}${pm ? ` · ${pm.name}` : ''}`}
+                      {' · '}{format(new Date(t.date), 'dd MMM yyyy', { locale: es })}
+                    </p>
+                  </div>
+                  <span className={`font-bold text-sm ${isTransfer ? 'text-blue-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                    {isTransfer ? '' : (t.type === 'income' ? '+' : '-')}{fmt(t.amount)}
+                  </span>
+                  <div className="flex gap-1">
+                    {!isTransfer && (
+                      <button onClick={() => setModal(t)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition">
+                        <Pencil size={14} />
+                      </button>
+                    )}
+                    <button onClick={() => remove(t.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal?.id ? 'Editar transacción' : 'Nueva transacción'}
+      >
+        {modal && (
+          <TransactionForm
+            initial={modal?.id ? modal : null}
+            categories={categories}
+            paymentMethods={paymentMethods}
+            onSave={save}
+            onCancel={() => setModal(null)}
+          />
+        )}
+      </Modal>
+    </div>
+  )
+}
