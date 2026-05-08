@@ -38,6 +38,7 @@ export function QuickAddModal({ open, onClose }) {
   const [accountOpen, setAccountOpen] = useState(false)
   const [fromOpen, setFromOpen] = useState(false)
   const [toOpen, setToOpen] = useState(false)
+  const [installments, setInstallments] = useState(1)
 
   useEffect(() => {
     if (!user) return
@@ -66,6 +67,7 @@ export function QuickAddModal({ open, onClose }) {
     setToAccountId('')
     setNotes('')
     setType('expense')
+    setInstallments(1)
     setSaved(false)
   }
 
@@ -95,6 +97,20 @@ export function QuickAddModal({ open, onClose }) {
           { user_id: user.id, type: 'expense', amount: parseFloat(amount), date, payment_method_id: fromAccountId || null, transfer_group_id: groupId, notes: notes || `Transferencia → ${toName}` },
           { user_id: user.id, type: 'income',  amount: parseFloat(amount), date, payment_method_id: toAccountId || null,   transfer_group_id: groupId, notes: notes || `Transferencia desde ${fromName}` },
         ])
+      } else if (installments > 1) {
+        const groupId = crypto.randomUUID()
+        const cuotaAmount = Math.round((parseFloat(amount) / installments) * 100) / 100
+        const rows = Array.from({ length: installments }, (_, i) => {
+          const d = new Date(date + 'T12:00:00')
+          d.setMonth(d.getMonth() + i)
+          return {
+            user_id: user.id, type, amount: cuotaAmount, date: format(d, 'yyyy-MM-dd'),
+            category_id: categoryId || null, payment_method_id: paymentMethodId || null,
+            notes: `${notes || ''} (${i + 1}/${installments})`.trim(),
+            installments, installment_number: i + 1, installment_group_id: groupId,
+          }
+        })
+        await supabase.from('transactions').insert(rows)
       } else {
         await supabase.from('transactions').insert({
           user_id: user.id, type, amount: parseFloat(amount), date,
@@ -204,6 +220,16 @@ export function QuickAddModal({ open, onClose }) {
                       {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
                       <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
+                    {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
+                      <FormRow label="Cuotas">
+                        <select value={installments} onChange={e => setInstallments(Number(e.target.value))}
+                          className="text-sm text-gray-900 bg-transparent border-none outline-none">
+                          {[1,2,3,6,9,12,18,24].map(n => (
+                            <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` · $${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
+                          ))}
+                        </select>
+                      </FormRow>
+                    )}
                   </>
                 )}
 
@@ -241,9 +267,9 @@ export function QuickAddModal({ open, onClose }) {
 
       {/* From / To sheets para transferencias */}
       {fromOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setFromOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col">
+          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta origen</h3>
               <button onClick={() => setFromOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
@@ -260,9 +286,9 @@ export function QuickAddModal({ open, onClose }) {
         </div>
       )}
       {toOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setToOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col">
+          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta destino</h3>
               <button onClick={() => setToOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
@@ -281,9 +307,9 @@ export function QuickAddModal({ open, onClose }) {
 
       {/* Account sheet */}
       {accountOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end">
+        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAccountOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col">
+          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta</h3>
               <button onClick={() => setAccountOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">

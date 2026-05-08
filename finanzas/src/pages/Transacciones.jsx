@@ -26,20 +26,22 @@ function fmt(n) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-function AccountSheet({ title, value, paymentMethods, onChange, onClose }) {
+function AccountSheet({ title, value, paymentMethods, onChange, onClose, required = false }) {
   return (
-    <div className="fixed inset-0 z-[60] flex items-end">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full rounded-t-2xl shadow-2xl max-h-[60vh] flex flex-col">
+      <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">{title}</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
         </div>
         <div className="overflow-y-auto p-3">
-          <button type="button" onClick={() => { onChange(''); onClose() }}
-            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
-            Sin especificar
-          </button>
+          {!required && (
+            <button type="button" onClick={() => { onChange(''); onClose() }}
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
+              Sin especificar
+            </button>
+          )}
           {paymentMethods.map(m => (
             <button key={m.id} type="button" onClick={() => { onChange(m.id); onClose() }}
               className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${value === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
@@ -67,6 +69,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
   const [accountOpen, setAccountOpen] = useState(false)
   const [fromOpen, setFromOpen] = useState(false)
   const [toOpen, setToOpen] = useState(false)
+  const [installments, setInstallments] = useState(1)
 
   const topCats = categories.filter(c => !c.parent_id && c.type === type)
   const allSubcats = categories.filter(c => c.parent_id && topCats.some(p => p.id === c.parent_id))
@@ -84,7 +87,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
     if (type === 'transfer') {
       await onSave({ isTransfer: true, amount: parseFloat(amount), date, fromAccountId, toAccountId, notes })
     } else {
-      await onSave({ type, amount: parseFloat(amount), date, category_id: categoryId || null, payment_method_id: paymentMethodId || null, notes })
+      await onSave({ type, amount: parseFloat(amount), date, category_id: categoryId || null, payment_method_id: paymentMethodId || null, notes, installments })
     }
     setSaving(false)
   }
@@ -141,6 +144,16 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
                 {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
                 <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
+              {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
+                <FormRow label="Cuotas">
+                  <select value={installments} onChange={e => setInstallments(Number(e.target.value))}
+                    className="text-sm text-gray-900 bg-transparent border-none outline-none">
+                    {[1,2,3,6,9,12,18,24].map(n => (
+                      <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` · $${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
+                    ))}
+                  </select>
+                </FormRow>
+              )}
             </>
           )}
 
@@ -211,10 +224,28 @@ export function Transacciones() {
         { user_id: user.id, type: 'expense', amount: values.amount, date: values.date, payment_method_id: values.fromAccountId || null, transfer_group_id: groupId, notes: values.notes || `Transferencia → ${toName}` },
         { user_id: user.id, type: 'income',  amount: values.amount, date: values.date, payment_method_id: values.toAccountId || null,   transfer_group_id: groupId, notes: values.notes || `Transferencia desde ${fromName}` },
       ])
+    } else if (values.installments > 1) {
+      const groupId = crypto.randomUUID()
+      const cuotaAmount = Math.round((values.amount / values.installments) * 100) / 100
+      const rows = Array.from({ length: values.installments }, (_, i) => {
+        const d = new Date(values.date + 'T12:00:00')
+        d.setMonth(d.getMonth() + i)
+        return {
+          user_id: user.id, type: values.type, amount: cuotaAmount,
+          date: format(d, 'yyyy-MM-dd'),
+          category_id: values.category_id, payment_method_id: values.payment_method_id,
+          notes: `${values.notes || ''} (${i + 1}/${values.installments})`.trim(),
+          installments: values.installments, installment_number: i + 1,
+          installment_group_id: groupId,
+        }
+      })
+      await supabase.from('transactions').insert(rows)
     } else if (modal?.id) {
-      await supabase.from('transactions').update(values).eq('id', modal.id)
+      const { installments: _, ...rest } = values
+      await supabase.from('transactions').update(rest).eq('id', modal.id)
     } else {
-      await supabase.from('transactions').insert({ ...values, user_id: user.id })
+      const { installments: _, ...rest } = values
+      await supabase.from('transactions').insert({ ...rest, user_id: user.id })
     }
     setModal(null)
     load()

@@ -11,6 +11,7 @@ export function Layout() {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      {/* Desktop sidebar renders inside the flex row; mobile sheet renders as a portal overlay */}
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">

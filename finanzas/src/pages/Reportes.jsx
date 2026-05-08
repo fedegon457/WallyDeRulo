@@ -4,7 +4,7 @@ import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoTransactions, demoCategories } from '../lib/demoData'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, Legend, LineChart, Line
+  PieChart, Pie, Cell, LineChart, Line, Sector, Legend
 } from 'recharts'
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -19,11 +19,63 @@ function SectionTitle({ children }) {
   return <h2 className="text-base font-semibold text-gray-900 mb-4">{children}</h2>
 }
 
+function PieSection({ data }) {
+  const [activeIdx, setActiveIdx] = useState(null)
+  const total = data.reduce((s, d) => s + d.value, 0)
+
+  return (
+    <ResponsiveContainer width="100%" height={220}>
+      <PieChart>
+        <Pie
+          data={data} cx="50%" cy="50%" outerRadius={85}
+          dataKey="value" paddingAngle={2}
+          activeIndex={activeIdx}
+          activeShape={(props) => (
+            <Sector
+              cx={props.cx} cy={props.cy}
+              innerRadius={props.innerRadius}
+              outerRadius={props.outerRadius + 10}
+              startAngle={props.startAngle} endAngle={props.endAngle}
+              fill={props.fill}
+              style={{ filter: `drop-shadow(0px 4px 12px ${props.fill}aa)` }}
+            />
+          )}
+          onMouseEnter={(_, i) => setActiveIdx(i)}
+          onMouseLeave={() => setActiveIdx(null)}
+          style={{ cursor: 'pointer', outline: 'none' }}
+        >
+          {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+        </Pie>
+        <Tooltip
+          cursor={false}
+          content={({ active, payload }) => {
+            if (!active || !payload?.length) return null
+            const item = payload[0]
+            const idx = data.findIndex(d => d.name === item.name)
+            const color = COLORS[idx % COLORS.length]
+            const pct = ((item.value / total) * 100).toFixed(1)
+            return (
+              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 min-w-[150px]">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
+                  <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
+                </div>
+                <p className="text-lg font-bold text-gray-900">{fmt(item.value)}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{pct}% del total</p>
+              </div>
+            )
+          }}
+        />
+      </PieChart>
+    </ResponsiveContainer>
+  )
+}
+
 export function Reportes() {
   const { user } = useAuth()
-  const [transactions, setTransactions] = useState([])
-  const [categories, setCategories] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [transactions,    setTransactions]    = useState([])
+  const [categories,      setCategories]      = useState([])
+  const [loading,         setLoading]         = useState(true)
   const [period, setPeriod] = useState('6')
 
   useEffect(() => {
@@ -182,15 +234,7 @@ export function Reportes() {
           {expensesByCategory.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">Sin egresos en el período</p>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={expensesByCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value">
-                  {expensesByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v) => fmt(v)} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieSection data={expensesByCategory} />
           )}
           <div className="mt-3 space-y-1.5">
             {expensesByCategory.map((cat, i) => (
@@ -210,15 +254,7 @@ export function Reportes() {
           {incomeByCategory.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">Sin ingresos en el período</p>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie data={incomeByCategory} cx="50%" cy="50%" outerRadius={80} dataKey="value">
-                  {incomeByCategory.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                </Pie>
-                <Tooltip formatter={(v) => fmt(v)} />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <PieSection data={incomeByCategory} />
           )}
           <div className="mt-3 space-y-1.5">
             {incomeByCategory.map((cat, i) => (

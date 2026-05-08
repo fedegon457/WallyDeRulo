@@ -32,9 +32,9 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end">
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full rounded-t-2xl max-h-[75vh] flex flex-col shadow-2xl">
+      <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-md max-h-[75vh] sm:max-h-[80vh] flex flex-col shadow-2xl">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Categoría</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">

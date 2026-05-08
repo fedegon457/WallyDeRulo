@@ -3,14 +3,16 @@ import {
   Plus, Pencil, Trash2,
   Banknote, Building2, CreditCard, PiggyBank,
   Smartphone, TrendingUp, AlertCircle, FileText,
-  Shield, MoreHorizontal, Wallet
+  Shield, MoreHorizontal, Wallet, Eye, EyeOff
 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
-import { demoPaymentMethods, demoTransactions } from '../lib/demoData'
+import { demoPaymentMethods, demoTransactions, demoPMAdd, demoPMUpdate, demoPMRemove } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
 import { Input, Select } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
+import { AR_BANKS, CARD_NETWORKS, CARD_COLORS } from '../lib/creditCard'
+import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
 
 // ─── Configuración de tipos ───────────────────────────────────────────────────
 
@@ -50,23 +52,53 @@ function AccountForm({ initial, onSave, onCancel }) {
   const [name, setName] = useState(initial?.name ?? '')
   const [currency, setCurrency] = useState(initial?.currency ?? 'ARS')
   const [initialBalance, setInitialBalance] = useState(initial?.initial_balance ?? '')
+  // Campos de tarjeta de crédito
+  const [bankName, setBankName] = useState(initial?.bank_name ?? '')
+  const [cardNetwork, setCardNetwork] = useState(initial?.card_network ?? 'visa')
+  const [lastFour, setLastFour] = useState(initial?.last_four ?? '')
+  const [closingDay, setClosingDay] = useState(initial?.closing_day ?? '')
+  const [dueDay, setDueDay] = useState(initial?.due_day ?? '')
+  const [creditLimit, setCreditLimit] = useState(initial?.credit_limit ?? '')
+  const [weekendAdj, setWeekendAdj] = useState(initial?.weekend_adjustment ?? 'before')
+  const [cardColor, setCardColor] = useState(initial?.card_color ?? CARD_COLORS[0])
+  const [icon, setIcon] = useState(initial?.icon ?? '')
+  const [expiryDate, setExpiryDate] = useState(initial?.expiry_date ?? '')
+  const [securityCode, setSecurityCode] = useState(initial?.security_code ?? '')
+  const [showCvv, setShowCvv] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const info = typeInfo(accountType)
+  const isCC = accountType === 'credit_card'
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSaving(true)
-    const isDebt = typeInfo(accountType).isDebt
-    await onSave({
-      name,
-      account_type: accountType,
-      currency,
-      initial_balance: parseFloat(initialBalance) || 0,
-      // backward-compat: keep type field in sync
-      type: isDebt ? 'credit' : 'immediate',
-    })
-    setSaving(false)
+    try {
+      const isDebt = typeInfo(accountType).isDebt
+      const base = {
+        name,
+        account_type: accountType,
+        currency,
+        initial_balance: parseFloat(initialBalance) || 0,
+        type: isDebt ? 'credit' : 'immediate',
+        icon: icon || null,
+      }
+      const ccFields = isCC ? {
+        bank_name: bankName || null,
+        card_network: cardNetwork || null,
+        last_four: lastFour || null,
+        closing_day: parseInt(closingDay) || null,
+        due_day: parseInt(dueDay) || null,
+        credit_limit: parseFloat(String(creditLimit).replace(/\./g, '')) || null,
+        weekend_adjustment: weekendAdj,
+        card_color: cardColor,
+        expiry_date: expiryDate || null,
+        security_code: securityCode || null,
+      } : {}
+      await onSave({ ...base, ...ccFields })
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -97,15 +129,166 @@ function AccountForm({ initial, onSave, onCancel }) {
         </div>
       </div>
 
+      {/* Campos específicos de tarjeta de crédito */}
+      {isCC && (
+        <div className="bg-orange-50 rounded-xl p-4 space-y-4 border border-orange-100">
+          <p className="text-xs font-semibold text-orange-700 uppercase tracking-wide">Datos de la tarjeta</p>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Banco</label>
+              <select
+                value={bankName}
+                onChange={e => setBankName(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="">Seleccionar banco</option>
+                {AR_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Red</label>
+              <div className="flex gap-1.5 flex-wrap">
+                {CARD_NETWORKS.map(n => (
+                  <button
+                    key={n.value}
+                    type="button"
+                    onClick={() => setCardNetwork(n.value)}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border-2 transition ${
+                      cardNetwork === n.value ? 'border-current' : 'border-gray-200 text-gray-400'
+                    }`}
+                    style={cardNetwork === n.value ? { color: n.color, borderColor: n.color, background: n.color + '15' } : {}}
+                  >
+                    {n.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Últimos 4 dígitos"
+              value={lastFour}
+              onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              placeholder="0000"
+              inputMode="numeric"
+            />
+            <Input
+              label="Límite de crédito"
+              type="number"
+              min="0"
+              value={creditLimit}
+              onChange={e => setCreditLimit(e.target.value)}
+              placeholder="Sin límite"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Vencimiento (MM/AA)"
+              value={expiryDate}
+              onChange={e => {
+                let v = e.target.value.replace(/\D/g, '').slice(0, 4)
+                if (v.length > 2) v = v.slice(0, 2) + '/' + v.slice(2)
+                setExpiryDate(v)
+              }}
+              placeholder="MM/AA"
+              maxLength={5}
+            />
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Código de seguridad</label>
+              <div className="relative">
+                <input
+                  type={showCvv ? 'text' : 'password'}
+                  value={securityCode}
+                  onChange={e => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="CVV"
+                  maxLength={4}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCvv(v => !v)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  {showCvv ? <EyeOff size={15} /> : <Eye size={15} />}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Día de cierre</label>
+              <input
+                type="number"
+                min="1" max="28"
+                value={closingDay}
+                onChange={e => setClosingDay(e.target.value)}
+                placeholder="Ej: 15"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-gray-600 mb-1">Día de vencimiento</label>
+              <input
+                type="number"
+                min="1" max="28"
+                value={dueDay}
+                onChange={e => setDueDay(e.target.value)}
+                placeholder="Ej: 22"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-1">Si el cierre cae en finde/feriado</label>
+            <div className="flex gap-2">
+              {[['before', 'Cierra día hábil anterior'], ['after', 'Cierra día hábil siguiente']].map(([val, label]) => (
+                <button
+                  key={val}
+                  type="button"
+                  onClick={() => setWeekendAdj(val)}
+                  className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium border-2 transition ${
+                    weekendAdj === val ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-2">Color de la tarjeta</label>
+            <div className="flex gap-2 flex-wrap">
+              {CARD_COLORS.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setCardColor(c)}
+                  className={`w-8 h-8 rounded-full border-4 transition ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`}
+                  style={{ background: c }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <EmojiPicker value={icon} onChange={setIcon} label="Ícono de la cuenta (opcional)" />
+
       <Input
         label="Nombre de la cuenta"
         value={name}
         onChange={e => setName(e.target.value)}
         required
         placeholder={
+          isCC ? 'Ej: Visa Santander, Mastercard BBVA...' :
           accountType === 'cash' ? 'Ej: Efectivo pesos, Caja fuerte...' :
           accountType === 'bank' ? 'Ej: Galicia, Brubank, Santander...' :
-          accountType === 'credit_card' ? 'Ej: Visa Santander, Mastercard BBVA...' :
           'Nombre de la cuenta'
         }
       />
@@ -125,7 +308,7 @@ function AccountForm({ initial, onSave, onCancel }) {
         />
       </div>
 
-      {info.isDebt && (
+      {info.isDebt && !isCC && (
         <p className="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-2">
           Para cuentas de deuda, ingresá el saldo actual que debés. Se irá actualizando con tus gastos y pagos.
         </p>
@@ -167,11 +350,27 @@ export function Cuentas() {
   useEffect(() => { if (user) load() }, [user])
 
   const save = async (values) => {
-    if (isDemo(user)) { setModal(null); return }
+    if (isDemo(user)) {
+      if (modal?.id) {
+        demoPMUpdate(modal.id, values)
+        setAccounts(prev => prev.map(a => a.id === modal.id ? { ...a, ...values } : a))
+      } else {
+        const newAcc = { ...values, id: `pm_demo_${Date.now()}`, user_id: 'demo' }
+        demoPMAdd(newAcc)
+        setAccounts(prev => [...prev, newAcc])
+      }
+      setModal(null)
+      return
+    }
+    let error
     if (modal?.id) {
-      await supabase.from('payment_methods').update(values).eq('id', modal.id)
+      ;({ error } = await supabase.from('payment_methods').update(values).eq('id', modal.id))
     } else {
-      await supabase.from('payment_methods').insert({ ...values, user_id: user.id })
+      ;({ error } = await supabase.from('payment_methods').insert({ ...values, user_id: user.id }))
+    }
+    if (error) {
+      alert(`Error al guardar: ${error.message}`)
+      return
     }
     setModal(null)
     load()
@@ -179,7 +378,7 @@ export function Cuentas() {
 
   const remove = async (id) => {
     if (!confirm('¿Eliminar esta cuenta?')) return
-    if (isDemo(user)) { setAccounts(prev => prev.filter(a => a.id !== id)); return }
+    if (isDemo(user)) { demoPMRemove(id); setAccounts(prev => prev.filter(a => a.id !== id)); return }
     await supabase.from('payment_methods').delete().eq('id', id)
     load()
   }
@@ -292,8 +491,11 @@ export function Cuentas() {
                       <div key={account.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${info.color}`}>
-                              <Icon size={18} />
+                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${account.icon ? 'bg-white border border-gray-200' : info.color}`}>
+                              {account.icon
+                                ? <IconDisplay icon={account.icon} size={24} />
+                                : <Icon size={18} />
+                              }
                             </div>
                             <div className="min-w-0">
                               <p className="font-medium text-gray-900 text-sm truncate">{account.name}</p>

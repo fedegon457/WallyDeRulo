@@ -37,6 +37,18 @@ create table payment_methods (
   )),
   currency text default 'ARS',
   initial_balance numeric(12,2) default 0,
+  closing_day integer check (closing_day between 1 and 28),
+  due_day integer check (due_day between 1 and 28),
+  credit_limit numeric(12,2),
+  -- Campos adicionales para tarjetas de crédito
+  bank_name text,
+  card_network text check (card_network in ('visa', 'mastercard', 'amex', 'naranja', 'cabal', 'other')),
+  last_four char(4),
+  weekend_adjustment text default 'before' check (weekend_adjustment in ('before', 'after')),
+  card_color text default '#1e293b',
+  expiry_date char(5),          -- formato MM/YY
+  security_code varchar(4),     -- CVV/CVC (3 o 4 dígitos)
+  icon text,                    -- emoji o "si:slug" (Simple Icons)
   created_at timestamptz default now()
 );
 
@@ -57,12 +69,47 @@ create table transactions (
   payment_method_id uuid references payment_methods(id) on delete set null,
   notes text,
   transfer_group_id uuid,
+  installments integer default 1,
+  installment_number integer default 1,
+  installment_group_id uuid,
   created_at timestamptz default now()
 );
 
 alter table transactions enable row level security;
 create policy "Users manage own transactions" on transactions
   for all using (auth.uid() = user_id);
+
+-- -----------------------------------------------
+-- RESÚMENES DE TARJETA DE CRÉDITO
+-- -----------------------------------------------
+create table credit_card_statements (
+  id uuid primary key default uuid_generate_v4(),
+  user_id uuid references auth.users(id) on delete cascade not null,
+  payment_method_id uuid references payment_methods(id) on delete cascade not null,
+  period text not null,                          -- formato 'yyyy-MM'
+  closing_date date not null,
+  due_date date not null,
+  saldo_anterior numeric(12,2) default 0,
+  pagos_acreditados numeric(12,2) default 0,
+  compras_periodo numeric(12,2) default 0,
+  cuotas_periodo numeric(12,2) default 0,
+  ajustes numeric(12,2) default 0,
+  total_resumen numeric(12,2) not null,
+  pago_minimo numeric(12,2),
+  monto_pagado numeric(12,2) default 0,
+  fecha_pago date,
+  estado text default 'pendiente' check (estado in ('pendiente', 'pagado', 'parcial', 'sin_movimiento')),
+  notas text,
+  created_at timestamptz default now(),
+  unique (payment_method_id, period)
+);
+
+alter table credit_card_statements enable row level security;
+create policy "Users manage own statements" on credit_card_statements
+  for all using (auth.uid() = user_id);
+
+create index idx_statements_user on credit_card_statements(user_id);
+create index idx_statements_card_period on credit_card_statements(payment_method_id, period desc);
 
 -- -----------------------------------------------
 -- GASTOS COMPARTIDOS

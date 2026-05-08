@@ -10,6 +10,9 @@ import { Compartidos } from './pages/Compartidos'
 import { Reportes } from './pages/Reportes'
 import { GastosFijos } from './pages/GastosFijos'
 import { Cuentas } from './pages/Cuentas'
+import { Tarjetas } from './pages/Tarjetas'
+import { Calculadora } from './pages/Calculadora'
+import { Presupuestos } from './pages/Presupuestos'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -41,6 +44,9 @@ function AppRoutes() {
         <Route path="/compartidos" element={<Compartidos />} />
         <Route path="/reportes" element={<Reportes />} />
         <Route path="/gastos-fijos" element={<GastosFijos />} />
+        <Route path="/tarjetas" element={<Tarjetas />} />
+        <Route path="/calculadora" element={<Calculadora />} />
+        <Route path="/presupuestos" element={<Presupuestos />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

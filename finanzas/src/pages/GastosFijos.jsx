@@ -1,32 +1,172 @@
 import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, Check, Calendar, RefreshCw } from 'lucide-react'
+import {
+  Plus, Pencil, Trash2, Check, RefreshCw, X, Search, ChevronDown
+} from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
-import { demoRecurringExpenses, demoCategories, demoPaymentMethods } from '../lib/demoData'
+import {
+  demoRecurringExpenses, demoCategories, demoPaymentMethods, demoREAdd,
+} from '../lib/demoData'
 import { Button } from '../components/ui/Button'
-import { Input, Select, Textarea } from '../components/ui/Input'
+import { Input } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
+import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
+const fmt = (n) =>
+  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 
 const FREQ_LABELS = { monthly: 'Mensual', yearly: 'Anual', weekly: 'Semanal' }
 
-function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }) {
-  const [name, setName] = useState(initial?.name ?? '')
-  const [amount, setAmount] = useState(initial?.amount ?? '')
-  const [frequency, setFrequency] = useState(initial?.frequency ?? 'monthly')
-  const [dayOfMonth, setDayOfMonth] = useState(initial?.day_of_month ?? '')
-  const [categoryId, setCategoryId] = useState(initial?.category_id ?? '')
-  const [paymentMethodId, setPaymentMethodId] = useState(initial?.payment_method_id ?? '')
-  const [notes, setNotes] = useState(initial?.notes ?? '')
-  const [icon, setIcon] = useState(initial?.icon ?? '')
-  const [saving, setSaving] = useState(false)
+// ─── Picker de categorías ─────────────────────────────────────────────────────
+function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }) {
+  const [search, setSearch] = useState('')
+  const q = search.toLowerCase()
 
-  const expenseCategories = categories.filter(c => !c.parent_id && c.type === 'expense')
+  const usedCatIds = new Set(existingExpenses.map(e => e.category_id).filter(Boolean))
+  const available = categories.filter(c =>
+    c.type === 'expense' &&
+    !usedCatIds.has(c.id) &&
+    (!q || c.name.toLowerCase().includes(q))
+  )
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl max-h-[92vh] flex flex-col">
+
+        <div className="px-5 pt-5 pb-3 border-b border-gray-100 flex-shrink-0">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-lg font-semibold text-gray-900">Agregar gasto fijo</h2>
+            <button type="button" onClick={onClose}
+              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+              <X size={18} />
+            </button>
+          </div>
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar categoría..."
+              autoFocus
+              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+          </div>
+        </div>
+
+        <div className="overflow-y-auto flex-1 p-4 space-y-2">
+          {available.length > 0 ? (
+            available.map(c => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => onSelect({ name: c.name, icon: c.icon || null, category_id: c.id })}
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 transition text-left border-2 border-transparent hover:border-blue-100"
+              >
+                <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  {c.icon
+                    ? <IconDisplay icon={c.icon} size={20} />
+                    : <span className="text-base">📋</span>
+                  }
+                </div>
+                <span className="font-medium text-gray-800 text-sm">{c.name}</span>
+              </button>
+            ))
+          ) : (
+            <p className="text-sm text-gray-400 text-center py-6">
+              {q ? `Sin resultados para "${search}"` : 'Todas tus categorías ya tienen un gasto fijo asignado'}
+            </p>
+          )}
+
+          <button
+            type="button"
+            onClick={() => onSelect(null)}
+            className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 transition mt-2"
+          >
+            <Plus size={15} /> Crear sin categoría
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Dropdown custom ──────────────────────────────────────────────────────────
+function CustomSelect({ label, value, onChange, options, placeholder = '— Sin especificar —' }) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find(o => o.value === value)
+  const anyIcon = options.some(o => o.icon)
+
+  return (
+    <div className="relative">
+      {label && <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>}
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-xl text-sm bg-white transition text-left ${open ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200 hover:border-gray-300'}`}
+      >
+        <span className={`flex items-center gap-2.5 truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
+          {anyIcon && (
+            <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+              {selected?.icon && <IconDisplay icon={selected.icon} size={16} />}
+            </span>
+          )}
+          {selected ? selected.label : placeholder}
+        </span>
+        <ChevronDown size={15} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[9]" onClick={() => setOpen(false)} />
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
+            <button
+              type="button"
+              onClick={() => { onChange(''); setOpen(false) }}
+              className={`w-full text-left px-4 py-2.5 text-sm transition border-b border-gray-50 ${!value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-400 hover:bg-gray-50'}`}
+            >
+              {placeholder}
+            </button>
+            {options.map(o => (
+              <button
+                key={o.value}
+                type="button"
+                onClick={() => { onChange(o.value); setOpen(false) }}
+                className={`w-full text-left px-4 py-2.5 text-sm transition flex items-center gap-2.5 ${value === o.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+              >
+                {anyIcon && (
+                  <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
+                    {o.icon && <IconDisplay icon={o.icon} size={16} />}
+                  </span>
+                )}
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+// ─── Formulario de configuración ──────────────────────────────────────────────
+function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }) {
+  const [name, setName]                   = useState(initial?.name ?? '')
+  const [amount, setAmount]               = useState(initial?.amount ?? '')
+  const [frequency, setFrequency]         = useState(initial?.frequency ?? 'monthly')
+  const [dayOfMonth, setDayOfMonth]       = useState(initial?.day_of_month ?? '')
+  const [categoryId, setCategoryId]       = useState(initial?.category_id ?? '')
+  const [paymentMethodId, setPayMethodId] = useState(initial?.payment_method_id ?? '')
+  const [notes, setNotes]                 = useState(initial?.notes ?? '')
+  const [icon, setIcon]                   = useState(initial?.icon ?? '')
+  const [saving, setSaving]               = useState(false)
+
+  const fromPicker = !!(initial?._new && initial?.category_id)
+  const selectedCat = fromPicker ? categories.find(c => c.id === categoryId) : null
+  const expenseCategories = categories.filter(c => c.type === 'expense')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -46,67 +186,146 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="grid grid-cols-[56px_1fr] gap-3 items-end">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Ícono</label>
-          <input
-            type="text"
-            value={icon}
-            onChange={e => setIcon(e.target.value)}
-            placeholder="🏋️"
-            className="w-full border border-gray-300 rounded-lg px-2 py-2 text-center text-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-            maxLength={2}
+    <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* Categoría seleccionada (viene del picker) */}
+      {selectedCat && (
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
+          <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
+            {selectedCat.icon
+              ? <IconDisplay icon={selectedCat.icon} size={16} />
+              : <span className="text-sm">📋</span>
+            }
+          </div>
+          <span className="text-sm font-medium text-blue-700">{selectedCat.name}</span>
+          <span className="text-xs text-blue-400 ml-auto">Categoría</span>
+        </div>
+      )}
+
+      {/* Ícono + Nombre */}
+      <div className="flex gap-3 items-end">
+        <EmojiPicker value={icon} onChange={setIcon} label="Ícono" compact />
+        <div className="flex-1">
+          <Input
+            label="Nombre"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            placeholder="Ej: Netflix, Gym..."
           />
         </div>
-        <Input label="Nombre" value={name} onChange={e => setName(e.target.value)} required placeholder="Netflix, Gym, Spotify..." />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Input label="Monto ($)" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required placeholder="0" />
-        <Select label="Frecuencia" value={frequency} onChange={e => setFrequency(e.target.value)}>
-          <option value="monthly">Mensual</option>
-          <option value="weekly">Semanal</option>
-          <option value="yearly">Anual</option>
-        </Select>
+      {/* Monto */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Monto</label>
+        <div className="relative">
+          <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">$</span>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={amount}
+            onChange={e => setAmount(e.target.value)}
+            required
+            placeholder="0"
+            className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+          />
+        </div>
       </div>
 
+      {/* Frecuencia — pill buttons */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Frecuencia</label>
+        <div className="flex gap-2">
+          {[['monthly','Mensual'], ['yearly','Anual'], ['weekly','Semanal']].map(([val, lbl]) => (
+            <button
+              key={val}
+              type="button"
+              onClick={() => setFrequency(val)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
+                frequency === val
+                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                  : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {lbl}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Día de vencimiento */}
       {frequency === 'monthly' && (
         <Input
-          label="Día del mes (vencimiento)"
-          type="number"
-          min="1"
-          max="31"
+          label="Día de vencimiento (opcional)"
+          type="number" min="1" max="31"
           value={dayOfMonth}
           onChange={e => setDayOfMonth(e.target.value)}
           placeholder="ej: 15"
         />
       )}
 
-      <Select label="Categoría" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-        <option value="">— Sin categoría —</option>
-        {expenseCategories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
-      </Select>
+      {/* Categoría — solo sin picker */}
+      {!fromPicker && (
+        <CustomSelect
+          label="Categoría"
+          value={categoryId}
+          onChange={setCategoryId}
+          placeholder="— Sin categoría —"
+          options={expenseCategories.map(c => ({ value: c.id, label: c.name, icon: c.icon }))}
+        />
+      )}
 
-      <Select label="Método de pago" value={paymentMethodId} onChange={e => setPaymentMethodId(e.target.value)}>
-        <option value="">— Sin especificar —</option>
-        {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-      </Select>
+      {/* Método de pago — chips */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago</label>
+        <div className="flex flex-wrap gap-2">
+          {paymentMethods.map(m => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => setPayMethodId(paymentMethodId === m.id ? '' : m.id)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-2 transition ${
+                paymentMethodId === m.id
+                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+              }`}
+            >
+              {m.icon && <IconDisplay icon={m.icon} size={14} />}
+              {m.name}
+            </button>
+          ))}
+        </div>
+      </div>
 
-      <Textarea label="Notas (opcional)" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Descripción o detalle..." rows={2} />
+      {/* Notas */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1.5">Notas (opcional)</label>
+        <textarea
+          value={notes}
+          onChange={e => setNotes(e.target.value)}
+          placeholder="Descripción o detalle..."
+          rows={2}
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+        />
+      </div>
 
-      <div className="flex gap-2 pt-2">
+      <div className="flex gap-2 pt-1">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
-        <Button type="submit" className="flex-1" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</Button>
+        <Button type="submit" className="flex-1" disabled={saving}>
+          {saving ? 'Guardando...' : 'Guardar'}
+        </Button>
       </div>
     </form>
   )
 }
 
+// ─── Modal de pago ─────────────────────────────────────────────────────────────
 function PayModal({ expense, onPay, onCancel }) {
   const [amount, setAmount] = useState(expense.amount)
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
-  const [notes, setNotes] = useState('')
+  const [date, setDate]     = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [notes, setNotes]   = useState('')
   const [saving, setSaving] = useState(false)
 
   const handleSubmit = async (e) => {
@@ -119,39 +338,48 @@ function PayModal({ expense, onPay, onCancel }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex items-center gap-3">
-        <span className="text-3xl">{expense.icon || '📋'}</span>
+        <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0">
+          {expense.icon
+            ? <IconDisplay icon={expense.icon} size={28} />
+            : <span className="text-2xl">📋</span>
+          }
+        </div>
         <div>
           <p className="font-semibold text-gray-900">{expense.name}</p>
           <p className="text-sm text-gray-500">{fmt(expense.amount)} · {FREQ_LABELS[expense.frequency]}</p>
         </div>
       </div>
-
       <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
-      <Input label="Importe ($)" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required />
-      <Input label="Nota" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Comprobante, referencia..." />
-
+      <Input label="Importe ($)" type="number" min="0" step="0.01" value={amount}
+        onChange={e => setAmount(e.target.value)} required />
+      <Input label="Nota" value={notes} onChange={e => setNotes(e.target.value)}
+        placeholder="Comprobante, referencia..." />
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">Cancelar</Button>
-        <Button type="submit" className="flex-1" disabled={saving}>{saving ? 'Registrando...' : 'Registrar pago'}</Button>
+        <Button type="submit" className="flex-1" disabled={saving}>
+          {saving ? 'Registrando...' : 'Registrar pago'}
+        </Button>
       </div>
     </form>
   )
 }
 
+// ─── Página principal ─────────────────────────────────────────────────────────
 export function GastosFijos() {
   const { user } = useAuth()
-  const [expenses, setExpenses] = useState([])
-  const [categories, setCategories] = useState([])
+  const [expenses, setExpenses]             = useState([])
+  const [categories, setCategories]         = useState([])
   const [paymentMethods, setPaymentMethods] = useState([])
-  const [payments, setPayments] = useState([])
-  const [modal, setModal] = useState(null)
-  const [payModal, setPayModal] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [currentPeriod] = useState(format(new Date(), 'yyyy-MM'))
+  const [payments, setPayments]             = useState([])
+  const [showPicker, setShowPicker]         = useState(false)
+  const [modal, setModal]                   = useState(null) // null | expense (edit) | { _new: true, ...prefill }
+  const [payModal, setPayModal]             = useState(null)
+  const [loading, setLoading]               = useState(true)
+  const [currentPeriod]                     = useState(format(new Date(), 'yyyy-MM'))
 
   const load = async () => {
     if (isDemo(user)) {
-      setExpenses(demoRecurringExpenses)
+      setExpenses([...demoRecurringExpenses])
       setCategories(demoCategories)
       setPaymentMethods(demoPaymentMethods)
       setPayments([])
@@ -159,10 +387,13 @@ export function GastosFijos() {
       return
     }
     const [expRes, catRes, pmRes, payRes] = await Promise.all([
-      supabase.from('recurring_expenses').select('*, categories(id, name, icon), payment_methods(id, name)').eq('user_id', user.id).eq('is_active', true).order('name'),
+      supabase.from('recurring_expenses')
+        .select('*, categories(id, name, icon), payment_methods(id, name)')
+        .eq('user_id', user.id).eq('is_active', true).order('name'),
       supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
       supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('recurring_expense_payments').select('*').eq('user_id', user.id).eq('period', currentPeriod),
+      supabase.from('recurring_expense_payments').select('*')
+        .eq('user_id', user.id).eq('period', currentPeriod),
     ])
     setExpenses(expRes.data ?? [])
     setCategories(catRes.data ?? [])
@@ -173,8 +404,23 @@ export function GastosFijos() {
 
   useEffect(() => { if (user) load() }, [user])
 
+  const handlePickerSelect = (prefill) => {
+    setShowPicker(false)
+    setModal({ _new: true, ...(prefill ?? {}) })
+  }
+
   const save = async (values) => {
-    if (isDemo(user)) { setModal(null); return }
+    if (isDemo(user)) {
+      if (modal?.id) {
+        const idx = demoRecurringExpenses.findIndex(e => e.id === modal.id)
+        if (idx !== -1) Object.assign(demoRecurringExpenses[idx], values)
+      } else {
+        demoREAdd({ ...values, id: `re_${Date.now()}`, user_id: 'demo' })
+      }
+      setModal(null)
+      setExpenses([...demoRecurringExpenses])
+      return
+    }
     if (modal?.id) {
       await supabase.from('recurring_expenses').update(values).eq('id', modal.id)
     } else {
@@ -186,7 +432,12 @@ export function GastosFijos() {
 
   const remove = async (id) => {
     if (!confirm('¿Eliminar este gasto fijo?')) return
-    if (isDemo(user)) { setExpenses(prev => prev.filter(e => e.id !== id)); return }
+    if (isDemo(user)) {
+      const idx = demoRecurringExpenses.findIndex(e => e.id === id)
+      if (idx !== -1) demoRecurringExpenses.splice(idx, 1)
+      setExpenses([...demoRecurringExpenses])
+      return
+    }
     await supabase.from('recurring_expenses').update({ is_active: false }).eq('id', id)
     load()
   }
@@ -194,41 +445,37 @@ export function GastosFijos() {
   const handlePay = async ({ amount, date, notes }) => {
     const expense = payModal
     if (isDemo(user)) {
-      setPayments(prev => [...prev, { id: `dp-${Date.now()}`, recurring_expense_id: expense.id, amount, date, period: currentPeriod, notes }])
+      setPayments(prev => [...prev, {
+        id: `dp-${Date.now()}`,
+        recurring_expense_id: expense.id, amount, date, period: currentPeriod, notes,
+      }])
       setPayModal(null)
       return
     }
-    // Create transaction
     await supabase.from('transactions').insert({
-      user_id: user.id,
-      type: 'expense',
-      amount,
-      date,
+      user_id: user.id, type: 'expense', amount, date,
       category_id: expense.category_id || null,
       payment_method_id: expense.payment_method_id || null,
       notes: notes || expense.name,
     })
-    // Register payment
     await supabase.from('recurring_expense_payments').insert({
-      user_id: user.id,
-      recurring_expense_id: expense.id,
-      amount,
-      date,
-      period: currentPeriod,
-      notes,
+      user_id: user.id, recurring_expense_id: expense.id,
+      amount, date, period: currentPeriod, notes,
     })
     setPayModal(null)
     load()
   }
 
-  const isPaid = (expenseId) => payments.some(p => p.recurring_expense_id === expenseId)
-  const getPaid = (expenseId) => payments.filter(p => p.recurring_expense_id === expenseId).reduce((s, p) => s + p.amount, 0)
+  const isPaid  = (id) => payments.some(p => p.recurring_expense_id === id)
+  const getPaid = (id) => payments.filter(p => p.recurring_expense_id === id).reduce((s, p) => s + p.amount, 0)
 
   const totalMonthly = expenses.filter(e => e.frequency === 'monthly').reduce((s, e) => s + e.amount, 0)
-  const totalPaid = expenses.reduce((s, e) => s + getPaid(e.id), 0)
+  const totalPaid    = expenses.reduce((s, e) => s + getPaid(e.id), 0)
   const totalPending = expenses.filter(e => !isPaid(e.id)).reduce((s, e) => s + e.amount, 0)
 
   const mes = format(new Date(), 'MMMM yyyy', { locale: es })
+
+  const formInitial = modal?.id ? modal : (modal?._new ? modal : null)
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
@@ -243,45 +490,48 @@ export function GastosFijos() {
           <h1 className="text-2xl font-bold text-gray-900">Gastos Fijos</h1>
           <p className="text-gray-500 text-sm capitalize">{mes}</p>
         </div>
-        <Button onClick={() => setModal({})} size="md">
+        <Button onClick={() => setShowPicker(true)} size="md">
           <Plus size={16} /> Nuevo
         </Button>
       </div>
 
-      {/* Summary */}
+      {/* Resumen */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-          <p className="text-xs text-gray-400">Total mensual</p>
-          <p className="font-bold text-base text-gray-900">{fmt(totalMonthly)}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-          <p className="text-xs text-gray-400">Pagado</p>
-          <p className="font-bold text-base text-emerald-600">{fmt(totalPaid)}</p>
-        </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-          <p className="text-xs text-gray-400">Pendiente</p>
-          <p className="font-bold text-base text-orange-500">{fmt(totalPending)}</p>
-        </div>
+        {[
+          { label: 'Total mensual', value: fmt(totalMonthly), color: 'text-gray-900' },
+          { label: 'Pagado',        value: fmt(totalPaid),    color: 'text-emerald-600' },
+          { label: 'Pendiente',     value: fmt(totalPending), color: 'text-orange-500' },
+        ].map(s => (
+          <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
+            <p className="text-xs text-gray-400">{s.label}</p>
+            <p className={`font-bold text-base ${s.color}`}>{s.value}</p>
+          </div>
+        ))}
       </div>
 
       {expenses.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <RefreshCw size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Sin gastos fijos configurados</p>
-          <button onClick={() => setModal({})} className="text-blue-600 text-sm mt-2 hover:underline">Agregar uno</button>
+          <button onClick={() => setShowPicker(true)} className="text-blue-600 text-sm mt-2 hover:underline">
+            Agregar uno
+          </button>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="divide-y divide-gray-50">
             {expenses.map(e => {
-              const paid = isPaid(e.id)
+              const paid       = isPaid(e.id)
               const paidAmount = getPaid(e.id)
               const cat = categories.find(c => c.id === e.category_id)
-              const pm = paymentMethods.find(m => m.id === e.payment_method_id)
+              const pm  = paymentMethods.find(m => m.id === e.payment_method_id)
               return (
                 <div key={e.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl flex-shrink-0 ${paid ? 'bg-emerald-50' : 'bg-orange-50'}`}>
-                    {e.icon || cat?.icon || '📋'}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${paid ? 'bg-emerald-50' : 'bg-orange-50'}`}>
+                    {(e.icon || cat?.icon)
+                      ? <IconDisplay icon={e.icon || cat?.icon} size={24} />
+                      : <span className="text-xl">📋</span>
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm">{e.name}</p>
@@ -289,7 +539,7 @@ export function GastosFijos() {
                       {FREQ_LABELS[e.frequency]}
                       {e.day_of_month ? ` · día ${e.day_of_month}` : ''}
                       {cat ? ` · ${cat.name}` : ''}
-                      {pm ? ` · ${pm.name}` : ''}
+                      {pm  ? ` · ${pm.name}`  : ''}
                     </p>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
@@ -304,18 +554,18 @@ export function GastosFijos() {
                         <Check size={13} /> Pagado
                       </span>
                     ) : (
-                      <button
-                        onClick={() => setPayModal(e)}
-                        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition whitespace-nowrap"
-                      >
+                      <button onClick={() => setPayModal(e)}
+                        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
                         Pagar
                       </button>
                     )}
                     <div className="flex gap-1">
-                      <button onClick={() => setModal(e)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-blue-600 transition">
+                      <button onClick={() => setModal(e)}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-blue-600 transition">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => remove(e.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
+                      <button onClick={() => remove(e.id)}
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -327,10 +577,25 @@ export function GastosFijos() {
         </div>
       )}
 
-      <Modal open={!!modal} onClose={() => setModal(null)} title={modal?.id ? 'Editar gasto fijo' : 'Nuevo gasto fijo'}>
+      {/* Picker de categorías */}
+      {showPicker && (
+        <CategoryPickerModal
+          categories={categories}
+          existingExpenses={expenses}
+          onSelect={handlePickerSelect}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
+      {/* Formulario (nuevo o editar) */}
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal?.id ? 'Editar gasto fijo' : 'Configurar gasto fijo'}
+      >
         {modal && (
           <RecurringForm
-            initial={modal?.id ? modal : null}
+            initial={formInitial}
             categories={categories}
             paymentMethods={paymentMethods}
             onSave={save}
@@ -339,13 +604,10 @@ export function GastosFijos() {
         )}
       </Modal>
 
+      {/* Pago */}
       <Modal open={!!payModal} onClose={() => setPayModal(null)} title="Registrar pago">
         {payModal && (
-          <PayModal
-            expense={payModal}
-            onPay={handlePay}
-            onCancel={() => setPayModal(null)}
-          />
+          <PayModal expense={payModal} onPay={handlePay} onCancel={() => setPayModal(null)} />
         )}
       </Modal>
     </div>
