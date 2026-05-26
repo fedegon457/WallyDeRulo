@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Target } from 'lucide-react'
+﻿import { useEffect, useState, useMemo } from 'react'
+import { IconPlus, IconPencil, IconTrash, IconTarget } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import {
@@ -8,6 +8,7 @@ import {
 } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
 import { Modal } from '../components/ui/Modal'
+import { AmountInput } from '../components/ui/Input'
 import { IconDisplay } from '../components/ui/EmojiPicker'
 import { format, startOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -73,7 +74,7 @@ function BudgetForm({ initial, categories, budgets, onSave, onCancel }) {
               disabled={key === 'general' && hasGeneral}
               className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
                 active
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                  ? 'bg-primary-50 border-primary-200 text-primary-700'
                   : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
               } disabled:opacity-40 disabled:cursor-not-allowed`}
             >
@@ -99,7 +100,7 @@ function BudgetForm({ initial, categories, budgets, onSave, onCancel }) {
                   onClick={() => setCategoryId(c.id)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-2 transition ${
                     categoryId === c.id
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
                       : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                   }`}
                 >
@@ -119,15 +120,12 @@ function BudgetForm({ initial, categories, budgets, onSave, onCancel }) {
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Límite mensual</label>
         <div className="relative">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">$</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
+          <AmountInput
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={setAmount}
             required
             placeholder="0"
-            className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
@@ -246,7 +244,7 @@ export function Presupuestos() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
 
@@ -260,7 +258,7 @@ export function Presupuestos() {
           <p className="text-gray-500 text-sm capitalize">{mes}</p>
         </div>
         <Button onClick={() => setModal({})} size="md">
-          <Plus size={16} /> Nuevo
+          <IconPlus size={16} /> Nuevo
         </Button>
       </div>
 
@@ -274,7 +272,7 @@ export function Presupuestos() {
             <div className="flex items-start justify-between mb-4">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <Target size={15} className={text} />
+                  <IconTarget size={15} className={text} />
                   <span className={`text-xs font-semibold uppercase tracking-wide ${text}`}>Presupuesto general</span>
                 </div>
                 <p className="text-3xl font-bold text-gray-900">{fmt(spent)}</p>
@@ -282,12 +280,12 @@ export function Presupuestos() {
               </div>
               <div className="flex gap-1">
                 <button onClick={() => setModal(generalBudget)}
-                  className="p-1.5 rounded-lg hover:bg-white/70 text-gray-400 hover:text-blue-600 transition">
-                  <Pencil size={14} />
+                  className="p-1.5 rounded-lg hover:bg-white/70 text-gray-400 hover:text-primary-600 transition">
+                  <IconPencil size={14} />
                 </button>
                 <button onClick={() => remove(generalBudget.id)}
                   className="p-1.5 rounded-lg hover:bg-white/70 text-gray-400 hover:text-red-500 transition">
-                  <Trash2 size={14} />
+                  <IconTrash size={14} />
                 </button>
               </div>
             </div>
@@ -306,9 +304,9 @@ export function Presupuestos() {
       })() : (
         <button
           onClick={() => setModal({})}
-          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50 transition flex items-center justify-center gap-2"
+          className="w-full py-4 border-2 border-dashed border-gray-200 rounded-2xl text-sm text-gray-400 hover:border-primary-200 hover:text-primary-500 hover:bg-primary-50 transition flex items-center justify-center gap-2"
         >
-          <Target size={16} /> Agregar presupuesto general mensual
+          <IconTarget size={16} /> Agregar presupuesto general mensual
         </button>
       )}
 
@@ -342,12 +340,12 @@ export function Presupuestos() {
                       <div className="flex items-center gap-1.5">
                         <span className={`text-sm font-bold ${text}`}>{Math.round(ratio * 100)}%</span>
                         <button onClick={() => setModal(b)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-blue-600 transition">
-                          <Pencil size={13} />
+                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
+                          <IconPencil size={13} />
                         </button>
                         <button onClick={() => remove(b.id)}
                           className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
-                          <Trash2 size={13} />
+                          <IconTrash size={13} />
                         </button>
                       </div>
                     </div>
@@ -380,7 +378,7 @@ export function Presupuestos() {
                     </div>
                     <button
                       onClick={() => setModal({ _prefillCat: c.id })}
-                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-blue-50 transition"
+                      className="text-xs font-semibold text-primary-600 hover:text-primary-700 whitespace-nowrap px-2 py-1 rounded-lg hover:bg-primary-50 transition"
                     >
                       + Asignar
                     </button>
@@ -395,9 +393,9 @@ export function Presupuestos() {
       {/* Empty state */}
       {budgets.length === 0 && unbudgeted.length === 0 && (
         <div className="text-center py-16 text-gray-400">
-          <Target size={40} className="mx-auto mb-3 opacity-30" />
+          <IconTarget size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Sin presupuestos configurados</p>
-          <button onClick={() => setModal({})} className="text-blue-600 text-sm mt-2 hover:underline">
+          <button onClick={() => setModal({})} className="text-primary-600 text-sm mt-2 hover:underline">
             Crear el primero
           </button>
         </div>

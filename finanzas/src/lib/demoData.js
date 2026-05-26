@@ -3,20 +3,20 @@ import { format, subDays, subMonths, startOfMonth, addMonths } from 'date-fns'
 export const DEMO_USER = { id: 'demo', email: 'demo@wallyderulo.com' }
 
 export const demoCategories = [
-  { id: 'c1',  user_id: 'demo', name: 'Salud',          type: 'expense', parent_id: null,  icon: '🏥' },
-  { id: 'c2',  user_id: 'demo', name: 'Nutricionista',  type: 'expense', parent_id: 'c1',  icon: '🥗' },
-  { id: 'c3',  user_id: 'demo', name: 'Médico',         type: 'expense', parent_id: 'c1',  icon: '🩺' },
-  { id: 'c4',  user_id: 'demo', name: 'Psicóloga',      type: 'expense', parent_id: 'c1',  icon: '🧠' },
-  { id: 'c5',  user_id: 'demo', name: 'Comida',         type: 'expense', parent_id: null,  icon: '🍕' },
-  { id: 'c6',  user_id: 'demo', name: 'Supermercado',   type: 'expense', parent_id: 'c5',  icon: '🛒' },
-  { id: 'c7',  user_id: 'demo', name: 'Restaurante',    type: 'expense', parent_id: 'c5',  icon: '🍔' },
-  { id: 'c8',  user_id: 'demo', name: 'Transporte',     type: 'expense', parent_id: null,  icon: '🚗' },
-  { id: 'c9',  user_id: 'demo', name: 'Entretenimiento',type: 'expense', parent_id: null,  icon: '🎬' },
-  { id: 'c10', user_id: 'demo', name: 'Comisiones',     type: 'income',  parent_id: null,  icon: '💼' },
-  { id: 'c11', user_id: 'demo', name: 'Abono',          type: 'income',  parent_id: 'c10', icon: '📈' },
-  { id: 'c12', user_id: 'demo', name: 'Implementación', type: 'income',  parent_id: 'c10', icon: '🤝' },
-  { id: 'c13', user_id: 'demo', name: 'Equipos',        type: 'income',  parent_id: 'c10', icon: '💻' },
-  { id: 'c14', user_id: 'demo', name: 'Sueldo',         type: 'income',  parent_id: null,  icon: '💵' },
+  { id: 'c1',  user_id: 'demo', name: 'Salud',          type: 'expense', parent_id: null,  icon: 'IconHospital'      },
+  { id: 'c2',  user_id: 'demo', name: 'Nutricionista',  type: 'expense', parent_id: 'c1',  icon: 'IconSalad'         },
+  { id: 'c3',  user_id: 'demo', name: 'Médico',         type: 'expense', parent_id: 'c1',  icon: 'IconPill'          },
+  { id: 'c4',  user_id: 'demo', name: 'Psicóloga',      type: 'expense', parent_id: 'c1',  icon: 'IconHeart'         },
+  { id: 'c5',  user_id: 'demo', name: 'Comida',         type: 'expense', parent_id: null,  icon: 'IconToolsKitchen2' },
+  { id: 'c6',  user_id: 'demo', name: 'Supermercado',   type: 'expense', parent_id: 'c5',  icon: 'IconShoppingCart'  },
+  { id: 'c7',  user_id: 'demo', name: 'Restaurante',    type: 'expense', parent_id: 'c5',  icon: 'IconPizza'         },
+  { id: 'c8',  user_id: 'demo', name: 'Transporte',     type: 'expense', parent_id: null,  icon: 'IconCar'           },
+  { id: 'c9',  user_id: 'demo', name: 'Entretenimiento',type: 'expense', parent_id: null,  icon: 'IconMovie'         },
+  { id: 'c10', user_id: 'demo', name: 'Comisiones',     type: 'income',  parent_id: null,  icon: 'IconBriefcase'     },
+  { id: 'c11', user_id: 'demo', name: 'Abono',          type: 'income',  parent_id: 'c10', icon: 'IconChartLine'     },
+  { id: 'c12', user_id: 'demo', name: 'Implementación', type: 'income',  parent_id: 'c10', icon: 'IconTarget'        },
+  { id: 'c13', user_id: 'demo', name: 'Equipos',        type: 'income',  parent_id: 'c10', icon: 'IconDeviceLaptop'  },
+  { id: 'c14', user_id: 'demo', name: 'Sueldo',         type: 'income',  parent_id: null,  icon: 'IconWallet'        },
 ]
 
 // Array mutable — usar las funciones de abajo para modificarlo en demo mode
@@ -35,6 +35,10 @@ export function demoCatAdd(cat) { demoCategories.push(cat) }
 export function demoCatUpdate(id, values) {
   const idx = demoCategories.findIndex(c => c.id === id)
   if (idx !== -1) Object.assign(demoCategories[idx], values)
+}
+export function demoCatRemove(id) {
+  const idx = demoCategories.findIndex(c => c.id === id)
+  if (idx !== -1) demoCategories.splice(idx, 1)
 }
 
 export function demoREAdd(re) { demoRecurringExpenses.push(re) }
@@ -156,9 +160,9 @@ export function demoBudgetRemove(id) {
 
 export const demoRecurringExpenses = [
   { id: 're1', user_id: 'demo', name: 'Netflix',  amount: 8000,  frequency: 'monthly', day_of_month: 15, category_id: 'c9',  payment_method_id: 'pm4', notes: '', icon: 'si:netflix', is_active: true },
-  { id: 're2', user_id: 'demo', name: 'Gym',      amount: 25000, frequency: 'monthly', day_of_month: 1,  category_id: 'c1',  payment_method_id: 'pm2', notes: '', icon: '🏋️',        is_active: true },
+  { id: 're2', user_id: 'demo', name: 'Gym',      amount: 25000, frequency: 'monthly', day_of_month: 1,  category_id: 'c1',  payment_method_id: 'pm2', notes: '', icon: 'IconRun',     is_active: true },
   { id: 're3', user_id: 'demo', name: 'Spotify',  amount: 5000,  frequency: 'monthly', day_of_month: 10, category_id: 'c9',  payment_method_id: 'pm4', notes: '', icon: 'si:spotify', is_active: true },
-  { id: 're4', user_id: 'demo', name: 'Club',     amount: 40000, frequency: 'monthly', day_of_month: 5,  category_id: 'c1',  payment_method_id: 'pm3', notes: '', icon: '⚽',        is_active: true },
+  { id: 're4', user_id: 'demo', name: 'Club',     amount: 40000, frequency: 'monthly', day_of_month: 5,  category_id: 'c1',  payment_method_id: 'pm3', notes: '', icon: 'IconBallFootball', is_active: true },
 ]
 
 export const demoSharedExpenses = [

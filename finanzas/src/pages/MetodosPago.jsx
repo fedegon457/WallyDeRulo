@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, CreditCard, Banknote } from 'lucide-react'
+﻿import { useEffect, useState } from 'react'
+import { IconPlus, IconPencil, IconTrash, IconCreditCard, IconCash } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoPaymentMethods } from '../lib/demoData'
@@ -8,8 +8,8 @@ import { Input, Select } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 
 const TYPE_LABELS = { immediate: 'Pago inmediato', credit: 'Tarjeta de crédito' }
-const TYPE_ICONS = { immediate: Banknote, credit: CreditCard }
-const TYPE_COLORS = { immediate: 'bg-emerald-100 text-emerald-700', credit: 'bg-blue-100 text-blue-700' }
+const TYPE_ICONS = { immediate: IconCash, credit: IconCreditCard }
+const TYPE_COLORS = { immediate: 'bg-emerald-100 text-emerald-700', credit: 'bg-primary-100 text-primary-700' }
 
 function PaymentMethodForm({ initial, onSave, onCancel }) {
   const [name, setName] = useState(initial?.name ?? '')
@@ -34,17 +34,17 @@ function PaymentMethodForm({ initial, onSave, onCancel }) {
             onClick={() => setType('immediate')}
             className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition ${type === 'immediate' ? 'border-emerald-500 bg-emerald-50' : 'border-gray-200 hover:border-gray-300'}`}
           >
-            <Banknote size={22} className={type === 'immediate' ? 'text-emerald-600' : 'text-gray-400'} />
+            <IconCash size={22} className={type === 'immediate' ? 'text-emerald-600' : 'text-gray-400'} />
             <span className={`text-xs font-medium ${type === 'immediate' ? 'text-emerald-700' : 'text-gray-500'}`}>Pago inmediato</span>
             <span className="text-xs text-gray-400 text-center">Efectivo, débito, transferencia</span>
           </button>
           <button
             type="button"
             onClick={() => setType('credit')}
-            className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition ${type === 'credit' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'}`}
+            className={`flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition ${type === 'credit' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 hover:border-gray-300'}`}
           >
-            <CreditCard size={22} className={type === 'credit' ? 'text-blue-600' : 'text-gray-400'} />
-            <span className={`text-xs font-medium ${type === 'credit' ? 'text-blue-700' : 'text-gray-500'}`}>Tarjeta de crédito</span>
+            <IconCreditCard size={22} className={type === 'credit' ? 'text-primary-600' : 'text-gray-400'} />
+            <span className={`text-xs font-medium ${type === 'credit' ? 'text-primary-700' : 'text-gray-500'}`}>Tarjeta de crédito</span>
             <span className="text-xs text-gray-400 text-center">Se debita a futuro</span>
           </button>
         </div>
@@ -64,7 +64,7 @@ export function MetodosPago() {
   const [loading, setLoading] = useState(true)
 
   const load = async () => {
-    if (isDemo(user)) { setMethods(demoPaymentMethods); setLoading(false); return }
+    if (isDemo(user)) { setMethods([...demoPaymentMethods]); setLoading(false); return }
     const { data } = await supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name')
     setMethods(data ?? [])
     setLoading(false)
@@ -110,11 +110,11 @@ export function MetodosPago() {
                 </div>
               </div>
               <div className="flex gap-1">
-                <button onClick={() => setModal(m)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition">
-                  <Pencil size={14} />
+                <button onClick={() => setModal(m)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
+                  <IconPencil size={14} />
                 </button>
                 <button onClick={() => remove(m.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
-                  <Trash2 size={14} />
+                  <IconTrash size={14} />
                 </button>
               </div>
             </div>
@@ -132,17 +132,17 @@ export function MetodosPago() {
           <p className="text-gray-500 text-sm">Personalizá cómo registrás tus pagos</p>
         </div>
         <Button onClick={() => setModal({})} size="md">
-          <Plus size={16} /> Nuevo método
+          <IconPlus size={16} /> Nuevo método
         </Button>
       </div>
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+          <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
         </div>
       ) : methods.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <CreditCard size={40} className="mx-auto mb-3 opacity-30" />
+          <IconCreditCard size={40} className="mx-auto mb-3 opacity-30" />
           <p>Todavía no tenés métodos de pago</p>
           <Button onClick={() => setModal({})} variant="secondary" className="mt-4">Crear primer método</Button>
         </div>

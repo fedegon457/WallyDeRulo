@@ -1,0 +1,53 @@
+name: Deploy MyWalli
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'finanzas/**'
+
+jobs:
+  deploy:
+    name: Build y deploy a VPS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: finanzas/package-lock.json
+
+      - name: Instalar dependencias
+        run: npm ci
+        working-directory: finanzas
+
+      - name: Build
+        run: npm run build
+        working-directory: finanzas
+
+      - name: Configurar SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Limpiar assets viejos
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "rm -rf /var/www/wallyderulo/assets"
+
+      - name: Subir archivos
+        run: |
+          scp -i ~/.ssh/deploy_key -r finanzas/dist/* \
+            root@${{ secrets.VPS_HOST }}:/var/www/wallyderulo/
+
+      - name: Permisos y reload nginx
+        run: |
+          ssh -i ~/.ssh/deploy_key root@${{ secrets.VPS_HOST }} \
+            "chmod -R 755 /var/www/wallyderulo/ && systemctl reload nginx && echo 'Deploy OK'"

@@ -1,14 +1,14 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import {
-  Plus, Pencil, Trash2, Check, RefreshCw, X, Search, ChevronDown
-} from 'lucide-react'
+  IconPlus, IconPencil, IconTrash, IconCheck, IconRefresh, IconX, IconSearch, IconChevronDown
+} from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import {
   demoRecurringExpenses, demoCategories, demoPaymentMethods, demoREAdd,
 } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
-import { Input } from '../components/ui/Input'
+import { Input, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
 import { format } from 'date-fns'
@@ -41,18 +41,18 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
             <h2 className="text-lg font-semibold text-gray-900">Agregar gasto fijo</h2>
             <button type="button" onClick={onClose}
               className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-              <X size={18} />
+              <IconX size={18} />
             </button>
           </div>
           <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar categoría..."
               autoFocus
-              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -64,7 +64,7 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
                 key={c.id}
                 type="button"
                 onClick={() => onSelect({ name: c.name, icon: c.icon || null, category_id: c.id })}
-                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 transition text-left border-2 border-transparent hover:border-blue-100"
+                className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-primary-50 transition text-left border-2 border-transparent hover:border-primary-100"
               >
                 <div className="w-9 h-9 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
                   {c.icon
@@ -84,9 +84,9 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
           <button
             type="button"
             onClick={() => onSelect(null)}
-            className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-600 flex items-center justify-center gap-2 transition mt-2"
+            className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-sm font-medium text-gray-500 hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 flex items-center justify-center gap-2 transition mt-2"
           >
-            <Plus size={15} /> Crear sin categoría
+            <IconPlus size={15} /> Crear sin categoría
           </button>
         </div>
       </div>
@@ -106,7 +106,7 @@ function CustomSelect({ label, value, onChange, options, placeholder = '— Sin 
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-xl text-sm bg-white transition text-left ${open ? 'border-blue-400 ring-2 ring-blue-100' : 'border-gray-200 hover:border-gray-300'}`}
+        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-xl text-sm bg-white transition text-left ${open ? 'border-primary-400 ring-2 ring-primary-100' : 'border-gray-200 hover:border-gray-300'}`}
       >
         <span className={`flex items-center gap-2.5 truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
           {anyIcon && (
@@ -116,7 +116,7 @@ function CustomSelect({ label, value, onChange, options, placeholder = '— Sin 
           )}
           {selected ? selected.label : placeholder}
         </span>
-        <ChevronDown size={15} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+        <IconChevronDown size={15} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
 
       {open && (
@@ -126,7 +126,7 @@ function CustomSelect({ label, value, onChange, options, placeholder = '— Sin 
             <button
               type="button"
               onClick={() => { onChange(''); setOpen(false) }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition border-b border-gray-50 ${!value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-400 hover:bg-gray-50'}`}
+              className={`w-full text-left px-4 py-2.5 text-sm transition border-b border-gray-50 ${!value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-400 hover:bg-gray-50'}`}
             >
               {placeholder}
             </button>
@@ -135,7 +135,7 @@ function CustomSelect({ label, value, onChange, options, placeholder = '— Sin 
                 key={o.value}
                 type="button"
                 onClick={() => { onChange(o.value); setOpen(false) }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition flex items-center gap-2.5 ${value === o.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-2.5 text-sm transition flex items-center gap-2.5 ${value === o.value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
               >
                 {anyIcon && (
                   <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -190,15 +190,15 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
 
       {/* Categoría seleccionada (viene del picker) */}
       {selectedCat && (
-        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-blue-50 rounded-xl border border-blue-100">
+        <div className="flex items-center gap-2.5 px-3 py-2.5 bg-primary-50 rounded-xl border border-primary-100">
           <div className="w-7 h-7 bg-white rounded-lg flex items-center justify-center flex-shrink-0 shadow-sm">
             {selectedCat.icon
               ? <IconDisplay icon={selectedCat.icon} size={16} />
               : <span className="text-sm">📋</span>
             }
           </div>
-          <span className="text-sm font-medium text-blue-700">{selectedCat.name}</span>
-          <span className="text-xs text-blue-400 ml-auto">Categoría</span>
+          <span className="text-sm font-medium text-primary-700">{selectedCat.name}</span>
+          <span className="text-xs text-primary-400 ml-auto">Categoría</span>
         </div>
       )}
 
@@ -221,15 +221,12 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
         <label className="block text-sm font-medium text-gray-700 mb-1.5">Monto</label>
         <div className="relative">
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">$</span>
-          <input
-            type="number"
-            min="0"
-            step="0.01"
+          <AmountInput
             value={amount}
-            onChange={e => setAmount(e.target.value)}
+            onChange={setAmount}
             required
             placeholder="0"
-            className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+            className="w-full pl-8 pr-4 py-3 text-lg font-semibold border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
@@ -245,7 +242,7 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
               onClick={() => setFrequency(val)}
               className={`flex-1 py-2 rounded-lg text-sm font-medium border transition ${
                 frequency === val
-                  ? 'bg-blue-50 border-blue-300 text-blue-700'
+                  ? 'bg-primary-50 border-primary-200 text-primary-700'
                   : 'border-gray-200 text-gray-500 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -288,7 +285,7 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
               onClick={() => setPayMethodId(paymentMethodId === m.id ? '' : m.id)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-2 transition ${
                 paymentMethodId === m.id
-                  ? 'border-blue-500 bg-blue-50 text-blue-700'
+                  ? 'border-primary-500 bg-primary-50 text-primary-700'
                   : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
               }`}
             >
@@ -307,7 +304,7 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
           onChange={e => setNotes(e.target.value)}
           placeholder="Descripción o detalle..."
           rows={2}
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
         />
       </div>
 
@@ -350,8 +347,7 @@ function PayModal({ expense, onPay, onCancel }) {
         </div>
       </div>
       <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
-      <Input label="Importe ($)" type="number" min="0" step="0.01" value={amount}
-        onChange={e => setAmount(e.target.value)} required />
+      <AmountInput label="Importe ($)" value={amount} onChange={setAmount} required />
       <Input label="Nota" value={notes} onChange={e => setNotes(e.target.value)}
         placeholder="Comprobante, referencia..." />
       <div className="flex gap-2 pt-2">
@@ -479,7 +475,7 @@ export function GastosFijos() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
 
@@ -491,7 +487,7 @@ export function GastosFijos() {
           <p className="text-gray-500 text-sm capitalize">{mes}</p>
         </div>
         <Button onClick={() => setShowPicker(true)} size="md">
-          <Plus size={16} /> Nuevo
+          <IconPlus size={16} /> Nuevo
         </Button>
       </div>
 
@@ -511,9 +507,9 @@ export function GastosFijos() {
 
       {expenses.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <RefreshCw size={40} className="mx-auto mb-3 opacity-30" />
+          <IconRefresh size={40} className="mx-auto mb-3 opacity-30" />
           <p className="text-sm">Sin gastos fijos configurados</p>
-          <button onClick={() => setShowPicker(true)} className="text-blue-600 text-sm mt-2 hover:underline">
+          <button onClick={() => setShowPicker(true)} className="text-primary-600 text-sm mt-2 hover:underline">
             Agregar uno
           </button>
         </div>
@@ -551,22 +547,22 @@ export function GastosFijos() {
                     </div>
                     {paid ? (
                       <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
-                        <Check size={13} /> Pagado
+                        <IconCheck size={13} /> Pagado
                       </span>
                     ) : (
                       <button onClick={() => setPayModal(e)}
-                        className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
+                        className="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
                         Pagar
                       </button>
                     )}
                     <div className="flex gap-1">
                       <button onClick={() => setModal(e)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-blue-600 transition">
-                        <Pencil size={14} />
+                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
+                        <IconPencil size={14} />
                       </button>
                       <button onClick={() => remove(e.id)}
                         className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
-                        <Trash2 size={14} />
+                        <IconTrash size={14} />
                       </button>
                     </div>
                   </div>

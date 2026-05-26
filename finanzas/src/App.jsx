@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
 import { Layout } from './components/layout/Layout'
 import { Login } from './pages/Login'
@@ -18,7 +18,7 @@ function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
   return user ? children : <Navigate to="/login" replace />
@@ -28,7 +28,7 @@ function AppRoutes() {
   const { user, loading } = useAuth()
   if (loading) return (
     <div className="flex items-center justify-center h-screen">
-      <div className="animate-spin w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
 
@@ -39,7 +39,7 @@ function AppRoutes() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/transacciones" element={<Transacciones />} />
         <Route path="/categorias" element={<Categorias />} />
-        <Route path="/metodos-pago" element={<Cuentas />} />
+        <Route path="/metodos-pago" element={<MetodosPago />} />
         <Route path="/cuentas" element={<Cuentas />} />
         <Route path="/compartidos" element={<Compartidos />} />
         <Route path="/reportes" element={<Reportes />} />

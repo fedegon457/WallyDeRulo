@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
-import { X, ChevronRight, ArrowLeftRight } from 'lucide-react'
+import { IconX, IconChevronRight } from '@tabler/icons-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth, isDemo } from '../../contexts/AuthContext'
 import { demoCategories, demoPaymentMethods } from '../../lib/demoData'
-import { Button } from './Button'
+import { Button, } from './Button'
+import { AmountInput } from './Input'
 import { CategorySheet } from './CategorySheet'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -39,6 +40,7 @@ export function QuickAddModal({ open, onClose }) {
   const [fromOpen, setFromOpen] = useState(false)
   const [toOpen, setToOpen] = useState(false)
   const [installments, setInstallments] = useState(1)
+  const [txCurrency, setTxCurrency] = useState('ARS')
 
   useEffect(() => {
     if (!user) return
@@ -68,12 +70,10 @@ export function QuickAddModal({ open, onClose }) {
     setNotes('')
     setType('expense')
     setInstallments(1)
+    setTxCurrency('ARS')
     setSaved(false)
   }
 
-  const filteredCategories = categories.filter(c => c.type === type || !c.parent_id && c.type === type || c.parent_id)
-    // keep all categories but filter top-level by type; subcats pass through
-    // actually: show only top-level of current type + their children
   const topCats = categories.filter(c => !c.parent_id && c.type === type)
   const allSubcats = categories.filter(c => c.parent_id && topCats.some(p => p.id === c.parent_id))
   const visibleCategories = [...topCats, ...allSubcats]
@@ -81,6 +81,7 @@ export function QuickAddModal({ open, onClose }) {
   const selectedCat = categories.find(c => c.id === categoryId)
   const selectedParent = selectedCat?.parent_id ? categories.find(c => c.id === selectedCat.parent_id) : null
   const selectedPM = paymentMethods.find(m => m.id === paymentMethodId)
+  const isCreditCard = type === 'expense' && selectedPM?.account_type === 'credit_card'
 
   const formatDate = (d) => format(new Date(d + 'T12:00:00'), "EEE d/M/yyyy", { locale: es })
 
@@ -88,13 +89,14 @@ export function QuickAddModal({ open, onClose }) {
     e.preventDefault()
     if (!amount) return
     setSaving(true)
+    const currency = isCreditCard ? txCurrency : null
     if (!isDemo(user)) {
       if (type === 'transfer') {
         const groupId = crypto.randomUUID()
         const fromName = paymentMethods.find(m => m.id === fromAccountId)?.name ?? ''
         const toName   = paymentMethods.find(m => m.id === toAccountId)?.name ?? ''
         await supabase.from('transactions').insert([
-          { user_id: user.id, type: 'expense', amount: parseFloat(amount), date, payment_method_id: fromAccountId || null, transfer_group_id: groupId, notes: notes || `Transferencia → ${toName}` },
+          { user_id: user.id, type: 'expense', amount: parseFloat(amount), date, payment_method_id: fromAccountId || null, transfer_group_id: groupId, notes: notes || `Transferencia -> ${toName}` },
           { user_id: user.id, type: 'income',  amount: parseFloat(amount), date, payment_method_id: toAccountId || null,   transfer_group_id: groupId, notes: notes || `Transferencia desde ${fromName}` },
         ])
       } else if (installments > 1) {
@@ -108,6 +110,7 @@ export function QuickAddModal({ open, onClose }) {
             category_id: categoryId || null, payment_method_id: paymentMethodId || null,
             notes: `${notes || ''} (${i + 1}/${installments})`.trim(),
             installments, installment_number: i + 1, installment_group_id: groupId,
+            currency,
           }
         })
         await supabase.from('transactions').insert(rows)
@@ -117,6 +120,7 @@ export function QuickAddModal({ open, onClose }) {
           category_id: categoryId || null,
           payment_method_id: paymentMethodId || null,
           notes,
+          currency,
         })
       }
     }
@@ -137,9 +141,9 @@ export function QuickAddModal({ open, onClose }) {
           {/* Header con toggle tipo */}
           <div className="px-5 pt-5 pb-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Nueva transacción</h2>
+              <h2 className="text-base font-semibold text-gray-900">Nueva transaccion</h2>
               <button onClick={handleClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-                <X size={20} />
+                <IconX size={20} />
               </button>
             </div>
             <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
@@ -152,7 +156,7 @@ export function QuickAddModal({ open, onClose }) {
                 Ingreso
               </button>
               <button type="button" onClick={() => { setType('transfer'); setCategoryId('') }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'transfer' ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-400'}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'transfer' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}>
                 Transf.
               </button>
             </div>
@@ -160,10 +164,10 @@ export function QuickAddModal({ open, onClose }) {
 
           {saved ? (
             <div className="px-5 pb-8 pt-2 flex flex-col items-center gap-3">
-              <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center text-3xl">✓</div>
-              <p className="text-emerald-700 font-semibold">¡Guardado!</p>
+              <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center text-3xl">&#10003;</div>
+              <p className="text-emerald-700 font-semibold">Guardado!</p>
               <Button variant="secondary" onClick={handleClose} className="w-full">Cerrar</Button>
-              <button onClick={reset} className="text-sm text-blue-600 hover:underline">Agregar otro</button>
+              <button onClick={reset} className="text-sm text-primary-600 hover:underline">Agregar otro</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>
@@ -180,13 +184,10 @@ export function QuickAddModal({ open, onClose }) {
 
                 {/* Importe */}
                 <FormRow label="Importe">
-                  <span className="text-sm text-gray-400">$</span>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
+                  <span className="text-sm text-gray-400">{isCreditCard && txCurrency === 'USD' ? 'US$' : '$'}</span>
+                  <AmountInput
                     value={amount}
-                    onChange={e => setAmount(e.target.value)}
+                    onChange={setAmount}
                     placeholder="0"
                     autoFocus
                     className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none"
@@ -199,33 +200,47 @@ export function QuickAddModal({ open, onClose }) {
                       {paymentMethods.find(m => m.id === fromAccountId)
                         ? <span className="text-sm text-gray-900">{paymentMethods.find(m => m.id === fromAccountId).name}</span>
                         : <span className="text-sm text-gray-300">Cuenta origen</span>}
-                      <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                      <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                     <FormRow label="A" onClick={() => setToOpen(true)}>
                       {paymentMethods.find(m => m.id === toAccountId)
                         ? <span className="text-sm text-gray-900">{paymentMethods.find(m => m.id === toAccountId).name}</span>
                         : <span className="text-sm text-gray-300">Cuenta destino</span>}
-                      <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                      <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                   </>
                 ) : (
                   <>
-                    <FormRow label="Categoría" onClick={() => setCatOpen(true)}>
+                    <FormRow label="Categoria" onClick={() => setCatOpen(true)}>
                       {selectedCat ? (
-                        <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} › ` : ''}{selectedCat.name}</span>
-                      ) : <span className="text-sm text-gray-300">Sin categoría</span>}
-                      <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                        <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} > ` : ''}{selectedCat.name}</span>
+                      ) : <span className="text-sm text-gray-300">Sin categoria</span>}
+                      <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                     <FormRow label="Cuenta" onClick={() => setAccountOpen(true)}>
                       {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
-                      <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                      <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
-                    {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
+                    {isCreditCard && (
+                      <FormRow label="Moneda">
+                        <div className="flex gap-1 p-0.5 bg-gray-100 rounded-lg">
+                          <button type="button" onClick={() => setTxCurrency('ARS')}
+                            className={`px-3 py-1 rounded-md text-xs font-semibold transition ${txCurrency === 'ARS' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-400'}`}>
+                            ARS $
+                          </button>
+                          <button type="button" onClick={() => setTxCurrency('USD')}
+                            className={`px-3 py-1 rounded-md text-xs font-semibold transition ${txCurrency === 'USD' ? 'bg-white text-green-700 shadow-sm' : 'text-gray-400'}`}>
+                            USD $
+                          </button>
+                        </div>
+                      </FormRow>
+                    )}
+                    {isCreditCard && (
                       <FormRow label="Cuotas">
                         <select value={installments} onChange={e => setInstallments(Number(e.target.value))}
                           className="text-sm text-gray-900 bg-transparent border-none outline-none">
                           {[1,2,3,6,9,12,18,24].map(n => (
-                            <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` · $${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
+                            <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` - ${txCurrency === 'USD' ? 'US$' : '$'}${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
                           ))}
                         </select>
                       </FormRow>
@@ -239,7 +254,7 @@ export function QuickAddModal({ open, onClose }) {
                     type="text"
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
-                    placeholder="Descripción..."
+                    placeholder="Descripcion..."
                     className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none"
                   />
                 </FormRow>
@@ -272,12 +287,12 @@ export function QuickAddModal({ open, onClose }) {
           <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta origen</h3>
-              <button onClick={() => setFromOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+              <button onClick={() => setFromOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
             </div>
             <div className="overflow-y-auto p-3">
               {paymentMethods.map(m => (
                 <button key={m.id} type="button" onClick={() => { setFromAccountId(m.id); setFromOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${fromAccountId === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${fromAccountId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                   {m.name}
                 </button>
               ))}
@@ -291,12 +306,12 @@ export function QuickAddModal({ open, onClose }) {
           <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta destino</h3>
-              <button onClick={() => setToOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+              <button onClick={() => setToOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
             </div>
             <div className="overflow-y-auto p-3">
               {paymentMethods.map(m => (
                 <button key={m.id} type="button" onClick={() => { setToAccountId(m.id); setToOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${toAccountId === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${toAccountId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
                   {m.name}
                 </button>
               ))}
@@ -313,14 +328,14 @@ export function QuickAddModal({ open, onClose }) {
             <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
               <h3 className="font-semibold text-gray-900">Cuenta</h3>
               <button onClick={() => setAccountOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-                <X size={18} />
+                <IconX size={18} />
               </button>
             </div>
             <div className="overflow-y-auto p-3">
               <button
                 type="button"
                 onClick={() => { setPaymentMethodId(''); setAccountOpen(false) }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!paymentMethodId ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
+                className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!paymentMethodId ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
               >
                 Sin especificar
               </button>
@@ -329,7 +344,7 @@ export function QuickAddModal({ open, onClose }) {
                   key={m.id}
                   type="button"
                   onClick={() => { setPaymentMethodId(m.id); setAccountOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${paymentMethodId === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${paymentMethodId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
                   {m.name}
                 </button>

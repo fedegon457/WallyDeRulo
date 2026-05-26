@@ -1,30 +1,29 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowUpDown, Tag, CreditCard,
-  Users, BarChart2, LogOut, X, DollarSign, RefreshCw, Wallet, Calculator, Target
-} from 'lucide-react'
+  IconLayoutDashboard, IconArrowsUpDown, IconTag, IconCreditCard,
+  IconUsers, IconChartBar, IconLogout, IconX, IconRefresh, IconWallet, IconCalculator, IconTarget
+} from '@tabler/icons-react'
 import { useAuth } from '../../contexts/AuthContext'
 
-// Full nav for desktop sidebar
 const desktopNav = [
-  { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/transacciones', icon: ArrowUpDown, label: 'Transacciones' },
-  { to: '/categorias', icon: Tag, label: 'Categorías' },
-  { to: '/cuentas', icon: Wallet, label: 'Cuentas' },
-  { to: '/tarjetas', icon: CreditCard, label: 'Tarjetas' },
-  { to: '/compartidos', icon: Users, label: 'Gastos compartidos' },
-  { to: '/gastos-fijos', icon: RefreshCw, label: 'Gastos Fijos' },
-  { to: '/presupuestos', icon: Target, label: 'Presupuestos' },
-  { to: '/reportes', icon: BarChart2, label: 'Reportes' },
-  { to: '/calculadora', icon: Calculator, label: 'Calculadora' },
+  { to: '/',              icon: IconLayoutDashboard, label: 'Dashboard'          },
+  { to: '/transacciones', icon: IconArrowsUpDown,    label: 'Transacciones'      },
+  { to: '/categorias',    icon: IconTag,             label: 'Categorias'         },
+  { to: '/cuentas',       icon: IconWallet,          label: 'Cuentas'            },
+  { to: '/tarjetas',      icon: IconCreditCard,      label: 'Tarjetas'           },
+  { to: '/compartidos',   icon: IconUsers,           label: 'Gastos compartidos' },
+  { to: '/gastos-fijos',  icon: IconRefresh,         label: 'Gastos Fijos'       },
+  { to: '/presupuestos',  icon: IconTarget,          label: 'Presupuestos'       },
+  { to: '/reportes',      icon: IconChartBar,        label: 'Reportes'           },
+  { to: '/calculadora',   icon: IconCalculator,      label: 'Calculadora'        },
 ]
 
-// Compact options for mobile sheet (bottom nav already has the main sections)
 const mobileNav = [
-  { to: '/', icon: LayoutDashboard, label: 'Inicio' },
-  { to: '/tarjetas', icon: CreditCard, label: 'Tarjetas' },
-  { to: '/calculadora', icon: Calculator, label: 'Calculadora' },
-  { to: '/categorias', icon: Tag, label: 'Categorías' },
+  { to: '/categorias',   icon: IconTag,        label: 'Categorias'         },
+  { to: '/compartidos',  icon: IconUsers,      label: 'Gastos compartidos' },
+  { to: '/gastos-fijos', icon: IconRefresh,    label: 'Gastos Fijos'       },
+  { to: '/presupuestos', icon: IconTarget,     label: 'Presupuestos'       },
+  { to: '/calculadora',  icon: IconCalculator, label: 'Calculadora'        },
 ]
 
 export function Sidebar({ open, onClose }) {
@@ -32,93 +31,124 @@ export function Sidebar({ open, onClose }) {
 
   return (
     <>
-      {/* ── Desktop sidebar (always visible on lg+) ── */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 h-full flex-shrink-0">
-        <div className="flex items-center gap-2 px-5 py-4 border-b">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-            <DollarSign size={18} className="text-white" />
+      {/* Desktop sidebar */}
+      <aside className="hidden lg:flex flex-col w-64 bg-primary-500 h-full flex-shrink-0">
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/20">
+          <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <IconWallet size={18} className="text-white" stroke={2} />
           </div>
-          <span className="font-bold text-gray-900 text-lg">WallyDeRulo</span>
+          <span className="font-extrabold text-white text-lg tracking-tight">MyWalli</span>
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
           {desktopNav.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
               to={to}
               end={to === '/'}
               className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold transition-all ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-white text-primary-600 shadow-sm'
+                    : 'text-white/75 hover:bg-white/15 hover:text-white'
                 }`
               }
             >
-              <Icon size={18} />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <div
+                    className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border"
+                    style={isActive
+                      ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' }
+                      : { borderColor: 'transparent' }
+                    }
+                  >
+                    <Icon size={16} className={isActive ? 'text-gray-900' : 'text-white/75'} stroke={2} />
+                  </div>
+                  <span className="flex-1">{label}</span>
+                </>
+              )}
             </NavLink>
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t">
+        <div className="px-3 py-4 border-t border-white/20">
           <button
             onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold text-white/60 hover:bg-red-500/25 hover:text-red-200 transition-all w-full"
           >
-            <LogOut size={18} />
-            Cerrar sesión
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center">
+              <IconLogout size={16} stroke={2} />
+            </div>
+            Cerrar sesion
           </button>
         </div>
       </aside>
 
-      {/* ── Mobile bottom sheet ── */}
+      {/* Mobile drawer — solo paginas que NO estan en el BottomNav */}
       {open && (
-        <div className="fixed inset-0 z-50 lg:hidden flex items-end">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-          <div className="relative bg-white w-full rounded-t-2xl shadow-2xl pb-safe">
-            {/* Handle + header */}
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <DollarSign size={15} className="text-white" />
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col">
+
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b-2 border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 bg-primary-500 rounded-2xl flex items-center justify-center">
+                  <IconWallet size={16} className="text-white" stroke={2} />
                 </div>
-                <span className="font-bold text-gray-900">WallyDeRulo</span>
+                <span className="font-extrabold text-gray-900 tracking-tight text-lg">MyWalli</span>
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-                <X size={18} />
+              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400">
+                <IconX size={20} />
               </button>
             </div>
 
-            <div className="p-3">
+            {/* Nav links */}
+            <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-1 pb-2">
+                Mas secciones
+              </p>
               {mobileNav.map(({ to, icon: Icon, label }) => (
                 <NavLink
                   key={to}
                   to={to}
-                  end={to === '/'}
                   onClick={onClose}
                   className={({ isActive }) =>
-                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
+                    `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
+                      isActive ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'
                     }`
                   }
                 >
-                  <Icon size={18} />
-                  {label}
+                  {({ isActive }) => (
+                    <>
+                      <div
+                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all border flex-shrink-0"
+                        style={isActive
+                          ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' }
+                          : { backgroundColor: '#f3f4f6', borderColor: 'transparent' }
+                        }
+                      >
+                        <Icon size={16} className={isActive ? 'text-gray-900' : 'text-gray-500'} stroke={2} />
+                      </div>
+                      {label}
+                    </>
+                  )}
                 </NavLink>
               ))}
+            </nav>
 
-              <div className="mt-1 pt-2 border-t border-gray-100">
-                <button
-                  onClick={() => { signOut(); onClose() }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors w-full"
-                >
-                  <LogOut size={18} />
-                  Cerrar sesión
-                </button>
-              </div>
+            {/* Cerrar sesion */}
+            <div className="p-3 border-t-2 border-gray-100">
+              <button
+                onClick={() => { signOut(); onClose() }}
+                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold text-red-500 hover:bg-red-50 transition-all w-full"
+              >
+                <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center flex-shrink-0">
+                  <IconLogout size={16} className="text-red-400" stroke={2} />
+                </div>
+                Cerrar sesion
+              </button>
             </div>
           </div>
         </div>

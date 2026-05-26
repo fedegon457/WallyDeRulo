@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+﻿import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoTransactions, demoCategories } from '../lib/demoData'
@@ -162,7 +162,7 @@ export function Reportes() {
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
-      <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
 
@@ -190,7 +190,7 @@ export function Reportes() {
         {[
           { label: 'Total ingresos', value: fmt(totalIncome), color: 'text-emerald-600' },
           { label: 'Total egresos', value: fmt(totalExpense), color: 'text-red-500' },
-          { label: 'Prom. ingresos/mes', value: fmt(avgIncome), color: 'text-blue-600' },
+          { label: 'Prom. ingresos/mes', value: fmt(avgIncome), color: 'text-primary-600' },
           { label: 'Prom. egresos/mes', value: fmt(avgExpense), color: 'text-orange-500' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">

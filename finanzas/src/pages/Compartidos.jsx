@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import { Plus, Trash2, ChevronDown, ChevronUp, Users, CheckCircle, Circle, DollarSign, ArrowRight, ArrowLeft } from 'lucide-react'
+﻿import { useEffect, useState } from 'react'
+import { IconPlus, IconChevronDown, IconChevronUp, IconUsers, IconCircleCheck, IconCircle, IconCurrencyDollar, IconArrowRight, IconArrowLeft } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoSharedExpenses, demoCategories, demoPaymentMethods } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
-import { Input, Select, Textarea } from '../components/ui/Input'
+import { Input, Select, Textarea, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
@@ -70,12 +70,12 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
         <label className="text-sm font-medium text-gray-700 block mb-2">¿Quién pagó?</label>
         <div className="flex gap-2">
           <button type="button" onClick={() => setPaidByMe(true)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition flex items-center justify-center gap-2 ${paidByMe ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200 text-gray-500'}`}>
-            <ArrowRight size={15} /> Yo pagué
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition flex items-center justify-center gap-2 ${paidByMe ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'}`}>
+            <IconArrowRight size={15} /> Yo pagué
           </button>
           <button type="button" onClick={() => setPaidByMe(false)}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition flex items-center justify-center gap-2 ${!paidByMe ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-500'}`}>
-            <ArrowLeft size={15} /> Otra persona
+            className={`flex-1 py-2.5 rounded-xl text-sm font-medium border-2 transition flex items-center justify-center gap-2 ${!paidByMe ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-gray-200 text-gray-500'}`}>
+            <IconArrowLeft size={15} /> Otra persona
           </button>
         </div>
       </div>
@@ -83,7 +83,7 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
       <Input label="Descripción" value={description} onChange={e => setDescription(e.target.value)} required placeholder="Ej: Cena, almuerzo, taxi..." />
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Total del gasto ($)" type="number" min="0" step="0.01" value={totalAmount} onChange={e => setTotalAmount(e.target.value)} required placeholder="0" />
+        <AmountInput label="Total del gasto ($)" value={totalAmount} onChange={setTotalAmount} required placeholder="0" />
         <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
       </div>
 
@@ -110,7 +110,7 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
             {participants.map((p, i) => (
               <div key={i} className="flex gap-2">
                 <Input placeholder="Nombre" value={p.name} onChange={e => updateParticipant(i, 'name', e.target.value)} className="flex-1" />
-                <Input placeholder="Monto $" type="number" min="0" step="0.01" value={p.amount} onChange={e => updateParticipant(i, 'amount', e.target.value)} className="w-32" />
+                <AmountInput placeholder="Monto $" value={p.amount} onChange={v => updateParticipant(i, 'amount', v)} className="w-32" />
                 {participants.length > 1 && (
                   <button type="button" onClick={() => removeParticipant(i)} className="px-2 text-gray-400 hover:text-red-500">✕</button>
                 )}
@@ -118,18 +118,18 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
             ))}
           </div>
           <Button type="button" variant="ghost" size="sm" onClick={addParticipant} className="mt-2">
-            <Plus size={14} /> Agregar persona
+            <IconPlus size={14} /> Agregar persona
           </Button>
         </div>
       ) : (
-        <div className="space-y-3 bg-purple-50 rounded-xl p-4">
+        <div className="space-y-3 bg-primary-50 rounded-xl p-4">
           <Input label="¿Quién pagó?" value={paidByName} onChange={e => setPaidByName(e.target.value)} required placeholder="Nombre de la persona" />
-          <Input label="Mi parte a pagar ($)" type="number" min="0" step="0.01" value={userShare} onChange={e => setUserShare(e.target.value)} required placeholder="0" />
-          <p className="text-xs text-purple-600">Se registrará un egreso cuando marques que pagaste</p>
+          <AmountInput label="Mi parte a pagar ($)" value={userShare} onChange={setUserShare} required placeholder="0" />
+          <p className="text-xs text-primary-600">Se registrará un egreso cuando marques que pagaste</p>
         </div>
       )}
 
-      <div className={`rounded-xl p-3 text-sm flex items-start gap-2 ${paidByMe ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700'}`}>
+      <div className={`rounded-xl p-3 text-sm flex items-start gap-2 ${paidByMe ? 'bg-primary-50 text-primary-700' : 'bg-primary-50 text-primary-700'}`}>
         <span>💡</span>
         <span>
           {paidByMe
@@ -164,7 +164,7 @@ function PaymentModal({ participant, paymentMethods, onSave, onClose }) {
     <form onSubmit={handleSubmit} className="space-y-4">
       <p className="text-sm text-gray-500">Cobro de <strong className="text-gray-900">{participant.name}</strong></p>
       <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
-      <Input label="Importe ($)" type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)} required placeholder="0" />
+      <AmountInput label="Importe ($)" value={amount} onChange={setAmount} required placeholder="0" />
       <Select label="Cuenta" value={paymentMethodId} onChange={e => setPaymentMethodId(e.target.value)}>
         <option value="">— Sin especificar —</option>
         {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
@@ -265,10 +265,10 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${allSettled ? 'bg-emerald-400' : isPaidByMe ? 'bg-orange-400' : 'bg-purple-400'}`} />
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${allSettled ? 'bg-emerald-400' : isPaidByMe ? 'bg-orange-400' : 'bg-primary-400'}`} />
               <p className="font-semibold text-gray-900 truncate">{expense.description}</p>
               {!isPaidByMe && (
-                <span className="text-xs bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">
+                <span className="text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full font-medium flex-shrink-0">
                   Pagó {expense.paid_by_name}
                 </span>
               )}
@@ -283,7 +283,7 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
                 {allSettled ? 'Cobrado ✓' : `Me deben ${fmt(totalPending)}`}
               </p>
             ) : (
-              <p className={`font-bold text-sm ${allSettled ? 'text-emerald-600' : 'text-purple-600'}`}>
+              <p className={`font-bold text-sm ${allSettled ? 'text-emerald-600' : 'text-primary-600'}`}>
                 {allSettled ? 'Pagado ✓' : `Debo ${fmt(iOwePending)}`}
               </p>
             )}
@@ -291,8 +291,8 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
         </div>
 
         <div className="flex items-center gap-2 mt-3">
-          <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-xs text-blue-600 hover:underline">
-            {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          <button onClick={() => setExpanded(!expanded)} className="flex items-center gap-1 text-xs text-primary-600 hover:underline">
+            {expanded ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
             {expanded ? 'Ocultar detalle' : 'Ver detalle'}
           </button>
           <span className="text-gray-200">|</span>
@@ -313,7 +313,7 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
                 <div key={p.id} className="bg-gray-50 rounded-lg p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      {isFullyPaid ? <CheckCircle size={16} className="text-emerald-500" /> : <Circle size={16} className="text-gray-300" />}
+                      {isFullyPaid ? <IconCircleCheck size={16} className="text-emerald-500" /> : <IconCircle size={16} className="text-gray-300" />}
                       <span className="text-sm font-medium text-gray-800">{p.name}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -322,7 +322,7 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
                       </span>
                       {!isFullyPaid && (
                         <Button size="sm" variant="success" onClick={() => setPayModal(p)}>
-                          <DollarSign size={12} /> Cobré
+                          <IconCurrencyDollar size={12} /> Cobré
                         </Button>
                       )}
                     </div>
@@ -342,19 +342,19 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
               )
             })
           ) : (
-            <div className="bg-purple-50 rounded-lg p-3">
+            <div className="bg-primary-50 rounded-lg p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  {expense.user_paid_back ? <CheckCircle size={16} className="text-emerald-500" /> : <Circle size={16} className="text-purple-300" />}
+                  {expense.user_paid_back ? <IconCircleCheck size={16} className="text-emerald-500" /> : <IconCircle size={16} className="text-primary-200" />}
                   <span className="text-sm font-medium text-gray-800">Mi parte</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className={`text-sm font-semibold ${expense.user_paid_back ? 'text-emerald-600' : 'text-purple-600'}`}>
+                  <span className={`text-sm font-semibold ${expense.user_paid_back ? 'text-emerald-600' : 'text-primary-600'}`}>
                     {expense.user_paid_back ? 'Pagado ✓' : `Debo ${fmt(expense.user_share)}`}
                   </span>
                   {!expense.user_paid_back && (
                     <Button size="sm" variant="primary" onClick={() => setMyPayModal(true)}>
-                      <DollarSign size={12} /> Pagué
+                      <IconCurrencyDollar size={12} /> Pagué
                     </Button>
                   )}
                 </div>
@@ -473,14 +473,14 @@ export function Compartidos() {
           <p className="text-gray-500 text-sm">Balance con tus amigos</p>
         </div>
         <Button onClick={() => setModal(true)} size="md">
-          <Plus size={16} /> Nuevo gasto
+          <IconPlus size={16} /> Nuevo gasto
         </Button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
           <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center">
-            <ArrowRight size={18} className="text-orange-500" />
+            <IconArrowRight size={18} className="text-orange-500" />
           </div>
           <div>
             <p className="text-xs text-gray-400">Me deben</p>
@@ -488,12 +488,12 @@ export function Compartidos() {
           </div>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center gap-3">
-          <div className="w-9 h-9 bg-purple-100 rounded-xl flex items-center justify-center">
-            <ArrowLeft size={18} className="text-purple-500" />
+          <div className="w-9 h-9 bg-primary-100 rounded-xl flex items-center justify-center">
+            <IconArrowLeft size={18} className="text-primary-500" />
           </div>
           <div>
             <p className="text-xs text-gray-400">Debo</p>
-            <p className="text-lg font-bold text-purple-600">{fmt(totalDebo)}</p>
+            <p className="text-lg font-bold text-primary-600">{fmt(totalDebo)}</p>
           </div>
         </div>
       </div>
@@ -509,11 +509,11 @@ export function Compartidos() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+          <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <Users size={40} className="mx-auto mb-3 opacity-30" />
+          <IconUsers size={40} className="mx-auto mb-3 opacity-30" />
           <p>{filter === 'pending' ? 'No hay gastos pendientes' : 'Sin gastos en esta categoría'}</p>
           <Button onClick={() => setModal(true)} variant="secondary" className="mt-4">Agregar gasto</Button>
         </div>

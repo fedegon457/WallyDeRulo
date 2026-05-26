@@ -1,4 +1,4 @@
-import { X } from 'lucide-react'
+import { IconX } from '@tabler/icons-react'
 import { useEffect } from 'react'
 
 export function Modal({ open, onClose, title, children, size = 'md' }) {
@@ -14,12 +14,15 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white rounded-xl shadow-xl w-full ${sizes[size]} max-h-[90vh] flex flex-col`}>
-        <div className="flex items-center justify-between p-5 border-b">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button onClick={onClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition">
-            <X size={20} />
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className={`relative bg-white rounded-2xl shadow-2xl w-full ${sizes[size]} max-h-[90vh] flex flex-col border-2 border-gray-100`}>
+        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-gray-100">
+          <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition"
+          >
+            <IconX size={20} />
           </button>
         </div>
         <div className="overflow-y-auto flex-1 p-5">{children}</div>

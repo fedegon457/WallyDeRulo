@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import { Plus, Pencil, Trash2, ArrowUpDown, ChevronRight, X, ArrowLeftRight } from 'lucide-react'
+﻿import { useEffect, useState } from 'react'
+import { IconPlus, IconPencil, IconTrash, IconArrowsUpDown, IconChevronRight, IconX, IconArrowsLeftRight } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoTransactions, demoCategories, demoPaymentMethods } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
-import { Input, Select } from '../components/ui/Input'
+import { Input, Select, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { CategorySheet } from '../components/ui/CategorySheet'
 import { format } from 'date-fns'
@@ -33,18 +33,18 @@ function AccountSheet({ title, value, paymentMethods, onChange, onClose, require
       <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><X size={18} /></button>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
         </div>
         <div className="overflow-y-auto p-3">
           {!required && (
             <button type="button" onClick={() => { onChange(''); onClose() }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
               Sin especificar
             </button>
           )}
           {paymentMethods.map(m => (
             <button key={m.id} type="button" onClick={() => { onChange(m.id); onClose() }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${value === m.id ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
+              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${value === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
               {m.name}
             </button>
           ))}
@@ -105,7 +105,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
         <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5">
           {typeBtn('expense', 'Egreso', 'text-red-600')}
           {typeBtn('income', 'Ingreso', 'text-emerald-600')}
-          {typeBtn('transfer', 'Transferencia', 'text-blue-600')}
+          {typeBtn('transfer', 'Transferencia', 'text-primary-600')}
         </div>
 
         <div className="mb-5">
@@ -116,7 +116,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
 
           <FormRow label="Importe">
             <span className="text-sm text-gray-400">$</span>
-            <input type="number" min="0" step="0.01" value={amount} onChange={e => setAmount(e.target.value)}
+            <AmountInput value={amount} onChange={setAmount}
               required placeholder="0" autoFocus
               className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none" />
           </FormRow>
@@ -125,11 +125,11 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
             <>
               <FormRow label="De" onClick={() => setFromOpen(true)}>
                 {fromAccount ? <span className="text-sm text-gray-900">{fromAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta origen</span>}
-                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               <FormRow label="A" onClick={() => setToOpen(true)}>
                 {toAccount ? <span className="text-sm text-gray-900">{toAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta destino</span>}
-                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
             </>
           ) : (
@@ -138,11 +138,11 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
                 {selectedCat ? (
                   <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} › ` : ''}{selectedCat.name}</span>
                 ) : <span className="text-sm text-gray-300">Sin categoría</span>}
-                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               <FormRow label="Cuenta" onClick={() => setAccountOpen(true)}>
                 {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
-                <ChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
+                <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
                 <FormRow label="Cuotas">
@@ -266,7 +266,6 @@ export function Transacciones() {
     if (filterType === 'income'   && (t.type !== 'income'  || t.transfer_group_id)) return false
     if (filterType === 'expense'  && (t.type !== 'expense' || t.transfer_group_id)) return false
     if (filterType === 'transfer' && !t.transfer_group_id) return false
-    if (filterType === 'all' && false) return false
     if (filterMonth && !t.date.startsWith(filterMonth)) return false
     if (search) {
       const q = search.toLowerCase()
@@ -296,7 +295,7 @@ export function Transacciones() {
           <p className="text-gray-500 text-sm">Registrá todos tus movimientos</p>
         </div>
         <Button onClick={() => setModal({})} size="md">
-          <Plus size={16} /> Nueva
+          <IconPlus size={16} /> Nueva
         </Button>
       </div>
 
@@ -320,7 +319,7 @@ export function Transacciones() {
         {[
           { label: 'Ingresos', value: fmt(totalIncome), color: 'text-emerald-600' },
           { label: 'Egresos', value: fmt(totalExpense), color: 'text-red-500' },
-          { label: 'Balance', value: fmt(totalIncome - totalExpense), color: totalIncome - totalExpense >= 0 ? 'text-blue-600' : 'text-orange-500' },
+          { label: 'Balance', value: fmt(totalIncome - totalExpense), color: totalIncome - totalExpense >= 0 ? 'text-primary-600' : 'text-orange-500' },
         ].map(s => (
           <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
             <p className="text-xs text-gray-400">{s.label}</p>
@@ -331,11 +330,11 @@ export function Transacciones() {
 
       {loading ? (
         <div className="flex justify-center py-12">
-          <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+          <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full" />
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <ArrowUpDown size={40} className="mx-auto mb-3 opacity-30" />
+          <IconArrowsUpDown size={40} className="mx-auto mb-3 opacity-30" />
           <p>Sin transacciones para mostrar</p>
         </div>
       ) : (
@@ -353,8 +352,8 @@ export function Transacciones() {
 
               return (
                 <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-blue-50' : t.type === 'income' ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                    {isTransfer ? <ArrowLeftRight size={18} className="text-blue-500" /> : <span className="text-xl">{cat?.icon || (t.type === 'income' ? '💰' : '💸')}</span>}
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-primary-50' : t.type === 'income' ? 'bg-emerald-50' : 'bg-red-50'}`}>
+                    {isTransfer ? <IconArrowsLeftRight size={18} className="text-primary-500" /> : <span className="text-xl">{cat?.icon || (t.type === 'income' ? '💰' : '💸')}</span>}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">
@@ -365,17 +364,17 @@ export function Transacciones() {
                       {' · '}{format(new Date(t.date), 'dd MMM yyyy', { locale: es })}
                     </p>
                   </div>
-                  <span className={`font-bold text-sm ${isTransfer ? 'text-blue-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <span className={`font-bold text-sm ${isTransfer ? 'text-primary-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isTransfer ? '' : (t.type === 'income' ? '+' : '-')}{fmt(t.amount)}
                   </span>
                   <div className="flex gap-1">
                     {!isTransfer && (
-                      <button onClick={() => setModal(t)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-blue-600 transition">
-                        <Pencil size={14} />
+                      <button onClick={() => setModal(t)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
+                        <IconPencil size={14} />
                       </button>
                     )}
                     <button onClick={() => remove(t.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
-                      <Trash2 size={14} />
+                      <IconTrash size={14} />
                     </button>
                   </div>
                 </div>

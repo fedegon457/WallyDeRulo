@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { X, ChevronDown } from 'lucide-react'
+﻿import { useState } from 'react'
+import { IconX, IconChevronDown } from '@tabler/icons-react'
 
 export function CategorySheet({ categories, value, onChange, onClose }) {
   const [expandedId, setExpandedId] = useState(() => {
@@ -38,7 +38,7 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
         <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
           <h3 className="font-semibold text-gray-900">Categoría</h3>
           <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-            <X size={18} />
+            <IconX size={18} />
           </button>
         </div>
 
@@ -63,14 +63,14 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
                         onClick={() => handleParent(cat)}
                         className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center transition border ${
                           isSelected
-                            ? 'bg-blue-50 border-blue-200 text-blue-700'
+                            ? 'bg-primary-50 border-primary-200 text-primary-700'
                             : 'border-transparent hover:bg-gray-50'
                         }`}
                       >
                         <span className="text-2xl leading-none">{cat.icon || '📋'}</span>
                         <span className="text-xs font-medium text-gray-700 leading-tight mt-0.5">{cat.name}</span>
                         {catChildren.length > 0 && (
-                          <ChevronDown
+                          <IconChevronDown
                             size={11}
                             className={`text-gray-400 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
                           />
@@ -84,7 +84,7 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
 
                 {/* Subcategorías expandidas */}
                 {children.length > 0 && (
-                  <div className="ml-1 pl-3 border-l-2 border-blue-200">
+                  <div className="ml-1 pl-3 border-l-2 border-primary-200">
                     <div className="grid grid-cols-3 gap-2">
                       {children.map(child => {
                         const isSelected = value === child.id
@@ -95,7 +95,7 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
                             onClick={() => handleChild(child)}
                             className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-center transition border ${
                               isSelected
-                                ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                ? 'bg-primary-50 border-primary-200 text-primary-700'
                                 : 'border-transparent hover:bg-gray-50'
                             }`}
                           >

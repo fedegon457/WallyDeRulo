@@ -1,6 +1,6 @@
-import { useState } from 'react'
+﻿import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Menu, Plus } from 'lucide-react'
+import { IconMenu2, IconPlus } from '@tabler/icons-react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { QuickAddModal } from '../ui/QuickAdd'
@@ -10,45 +10,38 @@ export function Layout() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
 
   return (
-    <div className="flex h-screen overflow-hidden bg-gray-50">
-      {/* Desktop sidebar renders inside the flex row; mobile sheet renders as a portal overlay */}
+    <div className="flex h-screen overflow-hidden bg-surface">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header mobile */}
-        <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between lg:hidden">
+        <header className="bg-white border-b-2 border-gray-100 px-4 py-3 flex items-center justify-between lg:hidden sticky top-0 z-20">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            className="p-2 rounded-xl hover:bg-primary-50 text-gray-500 transition-colors"
           >
-            <Menu size={20} />
+            <IconMenu2 size={20} />
           </button>
-          <span className="font-semibold text-gray-900">WallyDeRulo</span>
-          {/* Placeholder para centrar el título */}
+          <span className="font-extrabold text-primary-500 tracking-tight text-lg">MyWalli</span>
           <div className="w-9" />
         </header>
 
-        {/* Contenido — con padding abajo en mobile para no tapar con el BottomNav */}
         <main className="flex-1 overflow-y-auto pb-20 lg:pb-0">
           <Outlet />
         </main>
       </div>
 
-      {/* FAB (visible en mobile y desktop) */}
       <button
         onClick={() => setQuickAddOpen(true)}
-        className="lg:flex fixed bottom-24 right-5 z-40 w-13 h-13 bg-blue-600 hover:bg-blue-700 active:scale-95 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center lg:bottom-6 lg:right-6 lg:w-14 lg:h-14"
-        style={{ width: 52, height: 52 }}
+        className="fixed bottom-24 right-5 z-40 rounded-2xl shadow-accent hover:shadow-xl active:scale-95 transition-all flex items-center justify-center lg:bottom-6 lg:right-6 border-2 border-gray-900"
+        style={{ width: 52, height: 52, backgroundColor: '#FCCB30' }}
         title="Registrar transacción rápida"
       >
-        <Plus size={22} />
+        <IconPlus size={22} className="text-gray-900" stroke={2.5} />
       </button>
 
-      {/* Bottom nav mobile */}
       <BottomNav />
-
-      {/* Modal compartido */}
       <QuickAddModal open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
     </div>
   )
 }
+

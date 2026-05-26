@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react'
-import { Calculator, Info, ChevronDown, ChevronUp, CreditCard, Banknote, AlertTriangle, Calendar, X } from 'lucide-react'
+﻿import { useState, useMemo, useEffect } from 'react'
+import { IconCalculator, IconInfoCircle, IconChevronDown, IconChevronUp, IconCreditCard, IconCash, IconAlertTriangle, IconCalendar } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoPaymentMethods, demoTransactions } from '../lib/demoData'
@@ -82,7 +82,7 @@ export function Calculadora() {
   const [inflation,       setInflation]       = useState(8)
   const [customInflation, setCustomInflation] = useState('')
   const [showTable,       setShowTable]       = useState(false)
-  const [cuotaMode,       setCuotaMode]       = useState('cuota') // 'cuota' | 'total'
+  const [cuotaMode,       setCuotaMode]       = useState('total') // 'total' | 'cuota'
   const [totalAmount,     setTotalAmount]     = useState('')
   const [cards,           setCards]           = useState([])
   const [transactions,    setTransactions]    = useState([])
@@ -178,12 +178,12 @@ export function Calculadora() {
             <span className="text-sm text-gray-400 w-36 flex-shrink-0">Tarjeta</span>
             <div className="flex-1 flex items-center gap-2 flex-wrap">
               <button type="button" onClick={() => setSelectedCardId('')}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!selectedCardId ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${!selectedCardId ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                 Sin tarjeta
               </button>
               {cards.map(c => (
                 <button key={c.id} type="button" onClick={() => setSelectedCardId(c.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${selectedCardId === c.id ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${selectedCardId === c.id ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                   {c.name}
                 </button>
               ))}
@@ -212,7 +212,7 @@ export function Calculadora() {
                   setCuotaAmount(String(Math.round(parseFloat(totalAmount) / n)))
                 }
               }}
-                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${installments === n ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${installments === n ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                 {n}
               </button>
             ))}
@@ -224,7 +224,7 @@ export function Calculadora() {
           <div className="w-36 flex-shrink-0 flex flex-col gap-0.5">
             <span className="text-sm text-gray-400">{cuotaMode === 'cuota' ? 'Valor por cuota' : 'Total en cuotas'}</span>
             <button type="button" onClick={() => { setCuotaMode(m => m === 'cuota' ? 'total' : 'cuota'); setTotalAmount(''); setCuotaAmount('') }}
-              className="text-xs text-blue-500 hover:underline text-left">
+              className="text-xs text-primary-500 hover:underline text-left">
               Ingresar {cuotaMode === 'cuota' ? 'el total' : 'por cuota'}
             </button>
           </div>
@@ -265,7 +265,7 @@ export function Calculadora() {
             <div className="flex flex-wrap gap-1.5">
               {PRESET_INFLATIONS.map(p => (
                 <button key={p} type="button" onClick={() => { setInflation(p); setCustomInflation('') }}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${effectiveInflation === p && customInflation === '' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                  className={`px-3 py-1 rounded-lg text-xs font-semibold transition ${effectiveInflation === p && customInflation === '' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
                   {p}%
                 </button>
               ))}
@@ -273,7 +273,7 @@ export function Calculadora() {
             <div className="flex items-center gap-2">
               <input type="number" min="0" max="200" step="0.5" value={customInflation}
                 onChange={e => setCustomInflation(e.target.value)} placeholder="Otro %"
-                className="w-24 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-blue-500" />
+                className="w-24 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-500" />
               <span className="text-xs text-gray-400">% mensual personalizado</span>
             </div>
           </div>
@@ -284,11 +284,11 @@ export function Calculadora() {
       {selectedCard && cardContext && (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="px-5 py-4 border-b border-gray-50 flex items-center gap-2">
-            <CreditCard size={16} className="text-blue-500" />
+            <IconCreditCard size={16} className="text-primary-500" />
             <span className="font-semibold text-sm text-gray-800">{selectedCard.name}</span>
             {!cardContext.closing_day && (
               <span className="ml-auto text-xs text-orange-500 flex items-center gap-1">
-                <AlertTriangle size={12} /> Sin cierre configurado
+                <IconAlertTriangle size={12} /> Sin cierre configurado
               </span>
             )}
           </div>
@@ -308,9 +308,9 @@ export function Calculadora() {
                     const total = Math.min(base + purchase, 100)
                     return (
                       <div className="h-full flex">
-                        <div className="h-full bg-blue-400 rounded-l-full transition-all" style={{ width: `${Math.min(base, 100)}%` }} />
+                        <div className="h-full bg-primary-400 rounded-l-full transition-all" style={{ width: `${Math.min(base, 100)}%` }} />
                         {purchase > 0 && (
-                          <div className={`h-full transition-all ${cardContext.overLimit ? 'bg-red-400' : 'bg-blue-200'}`}
+                          <div className={`h-full transition-all ${cardContext.overLimit ? 'bg-red-400' : 'bg-primary-200'}`}
                             style={{ width: `${Math.min(purchase, 100 - base)}%` }} />
                         )}
                       </div>
@@ -323,14 +323,14 @@ export function Calculadora() {
                 </div>
                 {cardContext.overLimit && (
                   <div className="flex items-center gap-2 bg-red-50 text-red-600 rounded-xl px-3 py-2 text-xs font-medium">
-                    <AlertTriangle size={13} />
+                    <IconAlertTriangle size={13} />
                     Esta compra supera el límite disponible de {fmt(cardContext.available)}
                   </div>
                 )}
               </>
             ) : (
               <p className="text-xs text-gray-400">
-                Ciclo actual: <strong className="text-gray-700">{fmt(cardContext.cycleSpent)}</strong> · Configurá el límite en <a href="/tarjetas" className="text-blue-500 hover:underline">Tarjetas</a>
+                Ciclo actual: <strong className="text-gray-700">{fmt(cardContext.cycleSpent)}</strong> · Configurá el límite en <a href="/tarjetas" className="text-primary-500 hover:underline">Tarjetas</a>
               </p>
             )}
 
@@ -338,7 +338,7 @@ export function Calculadora() {
             {cardContext.schedule && cuotaAmount && (
               <div className="mt-1">
                 <p className="text-xs font-semibold text-gray-500 mb-2 flex items-center gap-1.5">
-                  <Calendar size={12} /> Calendario de vencimientos
+                  <IconCalendar size={12} /> Calendario de vencimientos
                 </p>
                 <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
                   {cardContext.schedule.map((s, i) => (
@@ -357,7 +357,7 @@ export function Calculadora() {
 
             {!cardContext.closing_day && (
               <p className="text-xs text-gray-400">
-                Configurá el día de cierre en <a href="/tarjetas" className="text-blue-500 hover:underline">Tarjetas</a> para ver el calendario de vencimientos.
+                Configurá el día de cierre en <a href="/tarjetas" className="text-primary-500 hover:underline">Tarjetas</a> para ver el calendario de vencimientos.
               </p>
             )}
           </div>
@@ -368,10 +368,10 @@ export function Calculadora() {
       {result && (
         <div className="space-y-4">
           {/* Veredicto */}
-          <div className={`rounded-2xl overflow-hidden ${result.cuotasConvienen ? 'bg-emerald-500' : 'bg-blue-600'}`}>
+          <div className={`rounded-2xl overflow-hidden ${result.cuotasConvienen ? 'bg-emerald-500' : 'bg-primary-600'}`}>
             <div className="px-6 pt-6 pb-5 text-center">
-              <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${result.cuotasConvienen ? 'bg-emerald-400' : 'bg-blue-500'}`}>
-                {result.cuotasConvienen ? <CreditCard size={30} className="text-white" /> : <Banknote size={30} className="text-white" />}
+              <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${result.cuotasConvienen ? 'bg-emerald-400' : 'bg-primary-500'}`}>
+                {result.cuotasConvienen ? <IconCreditCard size={30} className="text-white" /> : <IconCash size={30} className="text-white" />}
               </div>
               <p className="text-white/80 text-sm font-medium uppercase tracking-widest mb-1">Mejor opción</p>
               <p className="text-white font-extrabold text-4xl mb-2">
@@ -384,7 +384,7 @@ export function Calculadora() {
                 }
               </p>
             </div>
-            <div className={`grid grid-cols-3 divide-x ${result.cuotasConvienen ? 'divide-emerald-400 bg-emerald-600' : 'divide-blue-500 bg-blue-700'}`}>
+            <div className={`grid grid-cols-3 divide-x ${result.cuotasConvienen ? 'divide-emerald-400 bg-emerald-600' : 'divide-primary-500 bg-primary-700'}`}>
               <div className="px-4 py-4 text-center">
                 <p className="text-white/60 text-xs mb-1">Contado</p>
                 <p className="text-white font-bold text-base">{fmt(result.cash)}</p>
@@ -407,7 +407,7 @@ export function Calculadora() {
           {/* Break-even */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-start gap-3">
-              <Info size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
+              <IconInfoCircle size={16} className="text-gray-400 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm font-medium text-gray-700">Inflación de break-even: <span className="text-gray-900">{fmtPct(result.breakEven)} mensual</span></p>
                 <p className="text-sm text-gray-500 mt-0.5">
@@ -425,7 +425,7 @@ export function Calculadora() {
             <button onClick={() => setShowTable(v => !v)}
               className="w-full flex items-center justify-between px-5 py-4 text-sm font-medium text-gray-700 hover:bg-gray-50 transition">
               <span>Desglose cuota por cuota</span>
-              {showTable ? <ChevronUp size={16} className="text-gray-400" /> : <ChevronDown size={16} className="text-gray-400" />}
+              {showTable ? <IconChevronUp size={16} className="text-gray-400" /> : <IconChevronDown size={16} className="text-gray-400" />}
             </button>
             {showTable && (
               <div className="overflow-x-auto">
@@ -470,7 +470,7 @@ export function Calculadora() {
 
       {!result && (
         <div className="text-center py-16 text-gray-300">
-          <Calculator size={48} className="mx-auto mb-3" />
+          <IconCalculator size={48} className="mx-auto mb-3" />
           <p className="text-sm">Completá los datos para ver el análisis</p>
         </div>
       )}

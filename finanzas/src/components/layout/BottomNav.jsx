@@ -1,33 +1,44 @@
 import { NavLink } from 'react-router-dom'
-import { ArrowUpDown, BarChart2, Users, Wallet, RefreshCw } from 'lucide-react'
+import {
+  IconLayoutDashboard, IconArrowsUpDown, IconCreditCard, IconWallet, IconChartBar
+} from '@tabler/icons-react'
 
 const tabs = [
-  { to: '/gastos-fijos',  icon: RefreshCw,   label: 'Fijos'     },
-  { to: '/compartidos',   icon: Users,       label: 'Amigos'    },
-  { to: '/transacciones', icon: ArrowUpDown, label: 'Trans.'    },
-  { to: '/cuentas',       icon: Wallet,      label: 'Cuentas'   },
-  { to: '/reportes',      icon: BarChart2,   label: 'Reportes'  },
+  { to: '/',              icon: IconLayoutDashboard, label: 'Inicio'    },
+  { to: '/transacciones', icon: IconArrowsUpDown,    label: 'Trans.'    },
+  { to: '/tarjetas',      icon: IconCreditCard,      label: 'Tarjetas'  },
+  { to: '/cuentas',       icon: IconWallet,          label: 'Cuentas'   },
+  { to: '/reportes',      icon: IconChartBar,        label: 'Reportes'  },
 ]
 
 export function BottomNav() {
   return (
-    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t border-gray-200">
-      <div className="flex items-stretch h-16">
+    <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white border-t-2 border-gray-100">
+      <div className="flex items-center h-16 px-1">
         {tabs.map(({ to, icon: Icon, label }) => (
           <NavLink
             key={to}
             to={to}
-            className={({ isActive }) =>
-              `flex-1 flex flex-col items-center justify-center gap-0.5 transition-colors ${
-                isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
-              }`
-            }
+            end={to === '/'}
+            className="flex-1 flex items-center justify-center"
           >
             {({ isActive }) => (
-              <>
-                <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
-                <span className="text-[10px] font-medium">{label}</span>
-              </>
+              <div
+                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all"
+                style={isActive
+                  ? { backgroundColor: '#FCCB30', border: '1.5px solid #e6b820' }
+                  : {}
+                }
+              >
+                <Icon
+                  size={18}
+                  stroke={isActive ? 2.3 : 1.8}
+                  className={isActive ? 'text-gray-900' : 'text-gray-400'}
+                />
+                <span className={`text-[10px] font-bold leading-none ${isActive ? 'text-gray-900' : 'text-gray-400'}`}>
+                  {label}
+                </span>
+              </div>
             )}
           </NavLink>
         ))}
