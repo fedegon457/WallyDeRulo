@@ -11,6 +11,8 @@ import { Button } from '../components/ui/Button'
 import { Input, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
+import { CustomSelect, buildPmGroups, ACCOUNT_TYPE_LABELS } from '../components/ui/CustomSelect'
+import { CategorySheet } from '../components/ui/CategorySheet'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -94,63 +96,6 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
   )
 }
 
-// ─── Dropdown custom ──────────────────────────────────────────────────────────
-function CustomSelect({ label, value, onChange, options, placeholder = '— Sin especificar —' }) {
-  const [open, setOpen] = useState(false)
-  const selected = options.find(o => o.value === value)
-  const anyIcon = options.some(o => o.icon)
-
-  return (
-    <div className="relative">
-      {label && <label className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>}
-      <button
-        type="button"
-        onClick={() => setOpen(o => !o)}
-        className={`w-full flex items-center justify-between gap-2 px-3.5 py-2.5 border rounded-xl text-sm bg-white transition text-left ${open ? 'border-primary-400 ring-2 ring-primary-100' : 'border-gray-200 hover:border-gray-300'}`}
-      >
-        <span className={`flex items-center gap-2.5 truncate ${selected ? 'text-gray-900' : 'text-gray-400'}`}>
-          {anyIcon && (
-            <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-              {selected?.icon && <IconDisplay icon={selected.icon} size={16} />}
-            </span>
-          )}
-          {selected ? selected.label : placeholder}
-        </span>
-        <IconChevronDown size={15} className={`text-gray-400 flex-shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-
-      {open && (
-        <>
-          <div className="fixed inset-0 z-[9]" onClick={() => setOpen(false)} />
-          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden max-h-56 overflow-y-auto">
-            <button
-              type="button"
-              onClick={() => { onChange(''); setOpen(false) }}
-              className={`w-full text-left px-4 py-2.5 text-sm transition border-b border-gray-50 ${!value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-400 hover:bg-gray-50'}`}
-            >
-              {placeholder}
-            </button>
-            {options.map(o => (
-              <button
-                key={o.value}
-                type="button"
-                onClick={() => { onChange(o.value); setOpen(false) }}
-                className={`w-full text-left px-4 py-2.5 text-sm transition flex items-center gap-2.5 ${value === o.value ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-              >
-                {anyIcon && (
-                  <span className="w-5 h-5 flex items-center justify-center flex-shrink-0">
-                    {o.icon && <IconDisplay icon={o.icon} size={16} />}
-                  </span>
-                )}
-                {o.label}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
 
 // ─── Formulario de configuración ──────────────────────────────────────────────
 function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }) {
@@ -163,9 +108,11 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
   const [notes, setNotes]                 = useState(initial?.notes ?? '')
   const [icon, setIcon]                   = useState(initial?.icon ?? '')
   const [saving, setSaving]               = useState(false)
+  const [catOpen, setCatOpen]             = useState(false)
 
   const fromPicker = !!(initial?._new && initial?.category_id)
-  const selectedCat = fromPicker ? categories.find(c => c.id === categoryId) : null
+  const selectedCat = categories.find(c => c.id === categoryId)
+  const selectedParentCat = selectedCat?.parent_id ? categories.find(c => c.id === selectedCat.parent_id) : null
   const expenseCategories = categories.filter(c => c.type === 'expense')
 
   const handleSubmit = async (e) => {
@@ -265,36 +212,50 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
 
       {/* Categoría — solo sin picker */}
       {!fromPicker && (
-        <CustomSelect
-          label="Categoría"
-          value={categoryId}
-          onChange={setCategoryId}
-          placeholder="— Sin categoría —"
-          options={expenseCategories.map(c => ({ value: c.id, label: c.name, icon: c.icon }))}
-        />
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoría</label>
+          <button
+            type="button"
+            onClick={() => setCatOpen(true)}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition text-left"
+          >
+            {selectedCat ? (
+              <>
+                {selectedCat.icon && <IconDisplay icon={selectedCat.icon} size={16} className="flex-shrink-0" />}
+                <span className="flex-1 text-gray-900">
+                  {selectedParentCat ? `${selectedParentCat.name} › ` : ''}{selectedCat.name}
+                </span>
+                <button type="button" onClick={e => { e.stopPropagation(); setCategoryId('') }}
+                  className="p-0.5 rounded hover:bg-gray-100 text-gray-300 hover:text-gray-500">
+                  <IconX size={13} />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-gray-400">— Sin categoría —</span>
+                <IconChevronDown size={15} className="text-gray-400 flex-shrink-0" />
+              </>
+            )}
+          </button>
+          {catOpen && (
+            <CategorySheet
+              categories={expenseCategories}
+              value={categoryId}
+              onChange={setCategoryId}
+              onClose={() => setCatOpen(false)}
+            />
+          )}
+        </div>
       )}
 
-      {/* Método de pago — chips */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Método de pago</label>
-        <div className="flex flex-wrap gap-2">
-          {paymentMethods.map(m => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => setPayMethodId(paymentMethodId === m.id ? '' : m.id)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium border-2 transition ${
-                paymentMethodId === m.id
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-              }`}
-            >
-              {m.icon && <IconDisplay icon={m.icon} size={14} />}
-              {m.name}
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Método de pago */}
+      <CustomSelect
+        label="Método de pago"
+        value={paymentMethodId}
+        onChange={setPayMethodId}
+        placeholder="— Sin especificar —"
+        groups={buildPmGroups(paymentMethods)}
+      />
 
       {/* Notas */}
       <div>

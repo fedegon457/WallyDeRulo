@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconArrowsUpDown, IconChevronRight, IconX, IconArrowsLeftRight } from '@tabler/icons-react'
+import { IconPlus, IconPencil, IconTrash, IconArrowsUpDown, IconChevronRight, IconX, IconArrowsLeftRight, IconDownload } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoTransactions, demoCategories, demoPaymentMethods } from '../lib/demoData'
@@ -7,6 +7,9 @@ import { Button } from '../components/ui/Button'
 import { Input, Select, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { CategorySheet } from '../components/ui/CategorySheet'
+import { IconDisplay } from '../components/ui/EmojiPicker'
+import { PaymentMethodSheet } from '../components/ui/PaymentMethodSheet'
+import { ReceiptButton } from '../components/ui/ReceiptButton'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -26,33 +29,6 @@ function fmt(n) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
 }
 
-function AccountSheet({ title, value, paymentMethods, onChange, onClose, required = false }) {
-  return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
-        </div>
-        <div className="overflow-y-auto p-3">
-          {!required && (
-            <button type="button" onClick={() => { onChange(''); onClose() }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!value ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}>
-              Sin especificar
-            </button>
-          )}
-          {paymentMethods.map(m => (
-            <button key={m.id} type="button" onClick={() => { onChange(m.id); onClose() }}
-              className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${value === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-              {m.name}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
 
 function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel }) {
   const isTransferInitial = initial?.transfer_group_id != null
@@ -124,11 +100,19 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
           {type === 'transfer' ? (
             <>
               <FormRow label="De" onClick={() => setFromOpen(true)}>
-                {fromAccount ? <span className="text-sm text-gray-900">{fromAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta origen</span>}
+                {fromAccount
+                  ? <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                      {fromAccount.icon && <IconDisplay icon={fromAccount.icon} size={15} />}{fromAccount.name}
+                    </span>
+                  : <span className="text-sm text-gray-300">Cuenta origen</span>}
                 <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               <FormRow label="A" onClick={() => setToOpen(true)}>
-                {toAccount ? <span className="text-sm text-gray-900">{toAccount.name}</span> : <span className="text-sm text-gray-300">Cuenta destino</span>}
+                {toAccount
+                  ? <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                      {toAccount.icon && <IconDisplay icon={toAccount.icon} size={15} />}{toAccount.name}
+                    </span>
+                  : <span className="text-sm text-gray-300">Cuenta destino</span>}
                 <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
             </>
@@ -136,12 +120,19 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
             <>
               <FormRow label="Categoría" onClick={() => setCatOpen(true)}>
                 {selectedCat ? (
-                  <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} › ` : ''}{selectedCat.name}</span>
+                  <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                    {selectedCat.icon && <IconDisplay icon={selectedCat.icon} size={16} />}
+                    {selectedParent ? `${selectedParent.name} › ` : ''}{selectedCat.name}
+                  </span>
                 ) : <span className="text-sm text-gray-300">Sin categoría</span>}
                 <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               <FormRow label="Cuenta" onClick={() => setAccountOpen(true)}>
-                {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
+                {selectedPM
+                  ? <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                      {selectedPM.icon && <IconDisplay icon={selectedPM.icon} size={15} />}{selectedPM.name}
+                    </span>
+                  : <span className="text-sm text-gray-300">Sin especificar</span>}
                 <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
               </FormRow>
               {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
@@ -171,9 +162,9 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
       </form>
 
       {catOpen && <CategorySheet categories={visibleCategories} value={categoryId} onChange={setCategoryId} onClose={() => setCatOpen(false)} />}
-      {accountOpen && <AccountSheet title="Cuenta" value={paymentMethodId} paymentMethods={paymentMethods} onChange={setPaymentMethodId} onClose={() => setAccountOpen(false)} />}
-      {fromOpen && <AccountSheet title="Cuenta origen" value={fromAccountId} paymentMethods={paymentMethods} onChange={setFromAccountId} onClose={() => setFromOpen(false)} />}
-      {toOpen && <AccountSheet title="Cuenta destino" value={toAccountId} paymentMethods={paymentMethods} onChange={setToAccountId} onClose={() => setToOpen(false)} />}
+      {accountOpen && <PaymentMethodSheet title="Cuenta" value={paymentMethodId} paymentMethods={paymentMethods} onChange={setPaymentMethodId} onClose={() => setAccountOpen(false)} />}
+      {fromOpen && <PaymentMethodSheet title="Cuenta origen" value={fromAccountId} paymentMethods={paymentMethods} onChange={setFromAccountId} onClose={() => setFromOpen(false)} />}
+      {toOpen && <PaymentMethodSheet title="Cuenta destino" value={toAccountId} paymentMethods={paymentMethods} onChange={setToAccountId} onClose={() => setToOpen(false)} />}
     </>
   )
 }
@@ -251,6 +242,10 @@ export function Transacciones() {
     load()
   }
 
+  const updateReceipt = (id, url) => {
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, receipt_url: url } : t))
+  }
+
   const remove = async (id) => {
     if (!confirm('¿Eliminar esta transacción?')) return
     const tx = transactions.find(t => t.id === id)
@@ -283,9 +278,31 @@ export function Transacciones() {
     return true
   })
 
-  const nonTransfer = filtered.filter(t => !t.transfer_group_id)
-  const totalIncome = nonTransfer.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const nonTransfer  = filtered.filter(t => !t.transfer_group_id)
+  const totalIncome  = nonTransfer.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
   const totalExpense = nonTransfer.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  const exportCSV = () => {
+    const headers = ['Fecha', 'Tipo', 'Categoría', 'Cuenta/Método', 'Importe', 'Nota']
+    const rows = displayList.map(t => {
+      const cat = categories.find(c => c.id === t.category_id)
+      const parentCat = cat?.parent_id ? categories.find(c => c.id === cat.parent_id) : null
+      const pm = paymentMethods.find(m => m.id === t.payment_method_id)
+      const catName = parentCat ? `${parentCat.name} > ${cat?.name}` : (cat?.name ?? '')
+      const type = t.transfer_group_id ? 'Transferencia' : t.type === 'income' ? 'Ingreso' : 'Egreso'
+      return [t.date, type, catName, pm?.name ?? '', t.amount, t.notes ?? '']
+    })
+    const csv = [headers, ...rows]
+      .map(row => row.map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+      .join('\n')
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    a.href     = url
+    a.download = `mywalli_${filterMonth || format(new Date(), 'yyyy-MM')}.csv`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="p-6 space-y-5 max-w-4xl mx-auto">
@@ -294,9 +311,18 @@ export function Transacciones() {
           <h1 className="text-2xl font-bold text-gray-900">Transacciones</h1>
           <p className="text-gray-500 text-sm">Registrá todos tus movimientos</p>
         </div>
-        <Button onClick={() => setModal({})} size="md">
-          <IconPlus size={16} /> Nueva
-        </Button>
+        <div className="flex gap-2">
+          <button
+            onClick={exportCSV}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition"
+          >
+            <IconDownload size={16} />
+            <span className="hidden sm:inline">Exportar</span>
+          </button>
+          <Button onClick={() => setModal({})} size="md">
+            <IconPlus size={16} /> Nueva
+          </Button>
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
@@ -353,7 +379,10 @@ export function Transacciones() {
               return (
                 <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-primary-50' : t.type === 'income' ? 'bg-emerald-50' : 'bg-red-50'}`}>
-                    {isTransfer ? <IconArrowsLeftRight size={18} className="text-primary-500" /> : <span className="text-xl">{cat?.icon || (t.type === 'income' ? '💰' : '💸')}</span>}
+                    {isTransfer
+                      ? <IconArrowsLeftRight size={18} className="text-primary-500" />
+                      : <IconDisplay icon={cat?.icon || (t.type === 'income' ? 'IconTrendingUp:#22C55E' : 'IconShoppingCart:#EF4444')} size={20} />
+                    }
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900 text-sm truncate">
@@ -367,7 +396,15 @@ export function Transacciones() {
                   <span className={`font-bold text-sm ${isTransfer ? 'text-primary-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isTransfer ? '' : (t.type === 'income' ? '+' : '-')}{fmt(t.amount)}
                   </span>
-                  <div className="flex gap-1">
+                  <div className="flex gap-0.5">
+                    {!isTransfer && !isDemo(user) && (
+                      <ReceiptButton
+                        transactionId={t.id}
+                        userId={user.id}
+                        receiptUrl={t.receipt_url}
+                        onUpdate={(url) => updateReceipt(t.id, url)}
+                      />
+                    )}
                     {!isTransfer && (
                       <button onClick={() => setModal(t)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
                         <IconPencil size={14} />

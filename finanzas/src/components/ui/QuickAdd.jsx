@@ -6,6 +6,8 @@ import { demoCategories, demoPaymentMethods } from '../../lib/demoData'
 import { Button, } from './Button'
 import { AmountInput } from './Input'
 import { CategorySheet } from './CategorySheet'
+import { PaymentMethodSheet } from './PaymentMethodSheet'
+import { IconDisplay } from './EmojiPicker'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -197,15 +199,15 @@ export function QuickAddModal({ open, onClose }) {
                 {type === 'transfer' ? (
                   <>
                     <FormRow label="De" onClick={() => setFromOpen(true)}>
-                      {paymentMethods.find(m => m.id === fromAccountId)
-                        ? <span className="text-sm text-gray-900">{paymentMethods.find(m => m.id === fromAccountId).name}</span>
-                        : <span className="text-sm text-gray-300">Cuenta origen</span>}
+                      {(() => { const m = paymentMethods.find(m => m.id === fromAccountId); return m
+                        ? <span className="flex items-center gap-1.5 text-sm text-gray-900">{m.icon && <IconDisplay icon={m.icon} size={15} />}{m.name}</span>
+                        : <span className="text-sm text-gray-300">Cuenta origen</span> })()}
                       <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                     <FormRow label="A" onClick={() => setToOpen(true)}>
-                      {paymentMethods.find(m => m.id === toAccountId)
-                        ? <span className="text-sm text-gray-900">{paymentMethods.find(m => m.id === toAccountId).name}</span>
-                        : <span className="text-sm text-gray-300">Cuenta destino</span>}
+                      {(() => { const m = paymentMethods.find(m => m.id === toAccountId); return m
+                        ? <span className="flex items-center gap-1.5 text-sm text-gray-900">{m.icon && <IconDisplay icon={m.icon} size={15} />}{m.name}</span>
+                        : <span className="text-sm text-gray-300">Cuenta destino</span> })()}
                       <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                   </>
@@ -218,7 +220,11 @@ export function QuickAddModal({ open, onClose }) {
                       <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                     <FormRow label="Cuenta" onClick={() => setAccountOpen(true)}>
-                      {selectedPM ? <span className="text-sm text-gray-900">{selectedPM.name}</span> : <span className="text-sm text-gray-300">Sin especificar</span>}
+                      {selectedPM
+                        ? <span className="flex items-center gap-1.5 text-sm text-gray-900">
+                            {selectedPM.icon && <IconDisplay icon={selectedPM.icon} size={15} />}{selectedPM.name}
+                          </span>
+                        : <span className="text-sm text-gray-300">Sin especificar</span>}
                       <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
                     {isCreditCard && (
@@ -280,79 +286,9 @@ export function QuickAddModal({ open, onClose }) {
         />
       )}
 
-      {/* From / To sheets para transferencias */}
-      {fromOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setFromOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Cuenta origen</h3>
-              <button onClick={() => setFromOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
-            </div>
-            <div className="overflow-y-auto p-3">
-              {paymentMethods.map(m => (
-                <button key={m.id} type="button" onClick={() => { setFromAccountId(m.id); setFromOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${fromAccountId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-      {toOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setToOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Cuenta destino</h3>
-              <button onClick={() => setToOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><IconX size={18} /></button>
-            </div>
-            <div className="overflow-y-auto p-3">
-              {paymentMethods.map(m => (
-                <button key={m.id} type="button" onClick={() => { setToAccountId(m.id); setToOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${toAccountId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}>
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Account sheet */}
-      {accountOpen && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setAccountOpen(false)} />
-          <div className="relative bg-white w-full rounded-t-2xl sm:rounded-2xl sm:max-w-sm shadow-2xl max-h-[60vh] sm:max-h-[70vh] flex flex-col">
-            <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-gray-100">
-              <h3 className="font-semibold text-gray-900">Cuenta</h3>
-              <button onClick={() => setAccountOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
-                <IconX size={18} />
-              </button>
-            </div>
-            <div className="overflow-y-auto p-3">
-              <button
-                type="button"
-                onClick={() => { setPaymentMethodId(''); setAccountOpen(false) }}
-                className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${!paymentMethodId ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-500 hover:bg-gray-50'}`}
-              >
-                Sin especificar
-              </button>
-              {paymentMethods.map(m => (
-                <button
-                  key={m.id}
-                  type="button"
-                  onClick={() => { setPaymentMethodId(m.id); setAccountOpen(false) }}
-                  className={`w-full text-left px-4 py-3 rounded-xl text-sm transition ${paymentMethodId === m.id ? 'bg-primary-50 text-primary-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                >
-                  {m.name}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
+      {fromOpen && <PaymentMethodSheet title="Cuenta origen" value={fromAccountId} paymentMethods={paymentMethods} onChange={setFromAccountId} onClose={() => setFromOpen(false)} allowEmpty={false} />}
+      {toOpen && <PaymentMethodSheet title="Cuenta destino" value={toAccountId} paymentMethods={paymentMethods} onChange={setToAccountId} onClose={() => setToOpen(false)} allowEmpty={false} />}
+      {accountOpen && <PaymentMethodSheet title="Cuenta" value={paymentMethodId} paymentMethods={paymentMethods} onChange={setPaymentMethodId} onClose={() => setAccountOpen(false)} />}
     </>
   )
 }

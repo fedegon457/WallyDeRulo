@@ -4,6 +4,8 @@ import {
   IconUpload, IconCircleCheck, IconClock, IconAlertTriangle, IconPlus, IconFileText,
   IconCalendar, IconTrendingUp, IconStack2, IconRefresh, IconChevronDown, IconChevronUp
 } from '@tabler/icons-react'
+import { IconDisplay } from '../components/ui/EmojiPicker'
+import { PaymentMethodSheet } from '../components/ui/PaymentMethodSheet'
 import { format, differenceInDays, startOfDay } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { supabase } from '../lib/supabase'
@@ -528,6 +530,8 @@ function PayModal({ card, statement, accounts, onPay, onClose }) {
   const [sourceId, setSourceId] = useState(accounts[0]?.id ?? '')
   const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'))
   const [saving, setSaving] = useState(false)
+  const [accountOpen, setAccountOpen] = useState(false)
+  const selectedSource = accounts.find(a => a.id === sourceId)
 
   const save = async (e) => {
     e.preventDefault(); setSaving(true)
@@ -554,10 +558,16 @@ function PayModal({ card, statement, accounts, onPay, onClose }) {
           <NumInput label="Monto a pagar" value={amount} onChange={setAmount} required />
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Desde cuenta</label>
-            <select value={sourceId} onChange={e => setSourceId(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 bg-white">
-              {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-            </select>
+            <button type="button" onClick={() => setAccountOpen(true)}
+              className="w-full flex items-center gap-2.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition text-left">
+              {selectedSource ? (
+                <>
+                  {selectedSource.icon && <IconDisplay icon={selectedSource.icon} size={16} className="flex-shrink-0" />}
+                  <span className="flex-1 text-gray-900">{selectedSource.name}</span>
+                </>
+              ) : <span className="text-gray-400">Seleccionar cuenta...</span>}
+            </button>
+            {accountOpen && <PaymentMethodSheet title="Desde cuenta" value={sourceId} paymentMethods={accounts} onChange={setSourceId} onClose={() => setAccountOpen(false)} allowEmpty={false} />}
           </div>
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Fecha de pago</label>
@@ -661,7 +671,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                 {cycleTx.sort((a, b) => b.date.localeCompare(a.date)).map(t => (
                   <div key={t.id} className="flex items-center gap-3 py-2.5 border-b border-gray-50 last:border-0">
                     <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-sm flex-shrink-0">
-                      {t.categories?.icon ?? '?'}
+                      <IconDisplay icon={t.categories?.icon || 'IconShoppingCart:#EF4444'} size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">

@@ -1,11 +1,14 @@
 ﻿import { useEffect, useState } from 'react'
-import { IconPlus, IconChevronDown, IconChevronUp, IconUsers, IconCircleCheck, IconCircle, IconCurrencyDollar, IconArrowRight, IconArrowLeft } from '@tabler/icons-react'
+import { IconPlus, IconChevronDown, IconChevronUp, IconUsers, IconCircleCheck, IconCircle, IconCurrencyDollar, IconArrowRight, IconArrowLeft, IconX } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoSharedExpenses, demoCategories, demoPaymentMethods } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
-import { Input, Select, Textarea, AmountInput } from '../components/ui/Input'
+import { Input, Textarea, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
+import { CustomSelect, buildPmGroups } from '../components/ui/CustomSelect'
+import { CategorySheet } from '../components/ui/CategorySheet'
+import { IconDisplay } from '../components/ui/EmojiPicker'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -25,6 +28,7 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
   const [paidByName, setPaidByName] = useState('')
   const [userShare, setUserShare] = useState('')
   const [saving, setSaving] = useState(false)
+  const [catOpen, setCatOpen] = useState(false)
 
   const addParticipant = () => setParticipants(p => [...p, { name: '', amount: '' }])
   const removeParticipant = (i) => setParticipants(p => p.filter((_, idx) => idx !== i))
@@ -62,7 +66,9 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
     setSaving(false)
   }
 
-  const expenseCategories = categories.filter(c => c.type === 'expense' && !c.parent_id)
+  const expenseCategories = categories.filter(c => c.type === 'expense')
+  const selectedCat = categories.find(c => c.id === categoryId)
+  const selectedParentCat = selectedCat?.parent_id ? categories.find(c => c.id === selectedCat.parent_id) : null
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
@@ -88,14 +94,47 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <Select label="Categoría" value={categoryId} onChange={e => setCategoryId(e.target.value)}>
-          <option value="">— Sin categoría —</option>
-          {expenseCategories.map(c => <option key={c.id} value={c.id}>{c.icon ? `${c.icon} ` : ''}{c.name}</option>)}
-        </Select>
-        <Select label="Método de pago" value={paymentMethodId} onChange={e => setPaymentMethodId(e.target.value)}>
-          <option value="">— Sin especificar —</option>
-          {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-        </Select>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoría</label>
+          <button
+            type="button"
+            onClick={() => setCatOpen(true)}
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm bg-white hover:border-gray-300 transition text-left"
+          >
+            {selectedCat ? (
+              <>
+                {selectedCat.icon && <IconDisplay icon={selectedCat.icon} size={16} className="flex-shrink-0" />}
+                <span className="flex-1 text-gray-900">
+                  {selectedParentCat ? `${selectedParentCat.name} › ` : ''}{selectedCat.name}
+                </span>
+                <button type="button" onClick={e => { e.stopPropagation(); setCategoryId('') }}
+                  className="p-0.5 rounded hover:bg-gray-100 text-gray-300 hover:text-gray-500">
+                  <IconX size={13} />
+                </button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 text-gray-400">— Sin categoría —</span>
+                <IconChevronDown size={15} className="text-gray-400 flex-shrink-0" />
+              </>
+            )}
+          </button>
+          {catOpen && (
+            <CategorySheet
+              categories={expenseCategories}
+              value={categoryId}
+              onChange={setCategoryId}
+              onClose={() => setCatOpen(false)}
+            />
+          )}
+        </div>
+        <CustomSelect
+          label="Método de pago"
+          value={paymentMethodId}
+          onChange={setPaymentMethodId}
+          placeholder="— Sin especificar —"
+          groups={buildPmGroups(paymentMethods)}
+        />
       </div>
 
       <Textarea label="Notas (opcional)" value={notes} onChange={e => setNotes(e.target.value)} rows={2} placeholder="Detalles..." />
@@ -165,10 +204,12 @@ function PaymentModal({ participant, paymentMethods, onSave, onClose }) {
       <p className="text-sm text-gray-500">Cobro de <strong className="text-gray-900">{participant.name}</strong></p>
       <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
       <AmountInput label="Importe ($)" value={amount} onChange={setAmount} required placeholder="0" />
-      <Select label="Cuenta" value={paymentMethodId} onChange={e => setPaymentMethodId(e.target.value)}>
-        <option value="">— Sin especificar —</option>
-        {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-      </Select>
+      <CustomSelect
+        label="Cuenta"
+        value={paymentMethodId}
+        onChange={setPaymentMethodId}
+        groups={buildPmGroups(paymentMethods)}
+      />
       <Input label="Nota" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Transferencia, efectivo, etc." />
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
@@ -202,10 +243,12 @@ function MyPaymentModal({ expense, paymentMethods, onSave, onClose }) {
         Pago a <strong className="text-gray-900">{expense.paid_by_name}</strong> · <strong className="text-gray-900">{fmt(expense.user_share)}</strong>
       </p>
       <Input label="Fecha" type="date" value={date} onChange={e => setDate(e.target.value)} required />
-      <Select label="Cuenta" value={paymentMethodId} onChange={e => setPaymentMethodId(e.target.value)}>
-        <option value="">— Sin especificar —</option>
-        {paymentMethods.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-      </Select>
+      <CustomSelect
+        label="Cuenta"
+        value={paymentMethodId}
+        onChange={setPaymentMethodId}
+        groups={buildPmGroups(paymentMethods)}
+      />
       <Input label="Nota" value={notes} onChange={e => setNotes(e.target.value)} placeholder="Transferencia, efectivo, etc." />
       <div className="flex gap-2 pt-2">
         <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>

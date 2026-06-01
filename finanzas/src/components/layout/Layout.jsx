@@ -4,10 +4,19 @@ import { IconMenu2, IconPlus } from '@tabler/icons-react'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { QuickAddModal } from '../ui/QuickAdd'
+import { Onboarding } from '../ui/Onboarding'
+
+const ONBOARDING_KEY = 'mywalli_onboarded_v1'
 
 export function Layout() {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const [sidebarOpen,    setSidebarOpen]    = useState(false)
+  const [quickAddOpen,   setQuickAddOpen]   = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => !localStorage.getItem(ONBOARDING_KEY))
+
+  const finishOnboarding = () => {
+    localStorage.setItem(ONBOARDING_KEY, '1')
+    setShowOnboarding(false)
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-surface">
@@ -41,6 +50,7 @@ export function Layout() {
 
       <BottomNav />
       <QuickAddModal open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
+      {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
     </div>
   )
 }

@@ -7,6 +7,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Sector, Legend
 } from 'recharts'
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
+import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react'
 import { es } from 'date-fns/locale'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
@@ -155,10 +156,29 @@ export function Reportes() {
       .slice(0, 8)
   })()
 
-  const totalIncome = monthlyData.reduce((s, m) => s + m.Ingresos, 0)
-  const totalExpense = monthlyData.reduce((s, m) => s + m.Egresos, 0)
-  const avgIncome = totalIncome / months.length
-  const avgExpense = totalExpense / months.length
+  const totalIncome  = monthlyData.reduce((s, m) => s + m.Ingresos, 0)
+  const totalExpense = monthlyData.reduce((s, m) => s + m.Egresos,  0)
+  const avgIncome    = totalIncome  / months.length
+  const avgExpense   = totalExpense / months.length
+
+  // Monthly comparison: current vs previous month
+  const curMonthStart  = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+  const curMonthEnd    = format(endOfMonth(new Date()),   'yyyy-MM-dd')
+  const prevMonthStart = format(startOfMonth(subMonths(new Date(), 1)), 'yyyy-MM-dd')
+  const prevMonthEnd   = format(endOfMonth(subMonths(new Date(), 1)),   'yyyy-MM-dd')
+
+  const curTxs  = transactions.filter(t => !t.transfer_group_id && t.date >= curMonthStart  && t.date <= curMonthEnd)
+  const prevTxs = transactions.filter(t => !t.transfer_group_id && t.date >= prevMonthStart && t.date <= prevMonthEnd)
+
+  const curIncome   = curTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const curExpense  = curTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+  const prevIncome  = prevTxs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+  const prevExpense = prevTxs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+
+  function pctChange(curr, prev) {
+    if (prev === 0) return curr > 0 ? 100 : 0
+    return Math.round(((curr - prev) / prev) * 100)
+  }
 
   if (loading) return (
     <div className="flex items-center justify-center h-full">
@@ -226,6 +246,46 @@ export function Reportes() {
             <Line type="monotone" dataKey="Balance" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Monthly comparison */}
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-base font-semibold text-gray-900">Comparativa mensual</h2>
+          <span className="text-xs text-gray-400">
+            {format(startOfMonth(new Date()), 'MMM', { locale: es })} vs {format(startOfMonth(subMonths(new Date(), 1)), 'MMM', { locale: es })}
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {[
+            { label: 'Ingresos',  curr: curIncome,                prev: prevIncome,                goodWhenUp: true  },
+            { label: 'Egresos',   curr: curExpense,               prev: prevExpense,                goodWhenUp: false },
+            { label: 'Balance',   curr: curIncome - curExpense,   prev: prevIncome - prevExpense,   goodWhenUp: true  },
+          ].map(({ label, curr, prev, goodWhenUp }) => {
+            const delta = pctChange(curr, prev)
+            const isUp  = delta > 0
+            const good  = goodWhenUp ? isUp : !isUp
+            const TrendIcon = delta === 0 ? IconMinus : isUp ? IconTrendingUp : IconTrendingDown
+            return (
+              <div key={label} className="text-center bg-gray-50 rounded-xl p-3">
+                <p className="text-xs text-gray-400 mb-1">{label}</p>
+                <p className="font-bold text-gray-900 text-sm">{fmt(curr)}</p>
+                <p className="text-xs text-gray-400 mb-1.5">{fmt(prev)}</p>
+                {prev > 0 || curr > 0 ? (
+                  <span className={`inline-flex items-center gap-0.5 text-xs font-semibold px-1.5 py-0.5 rounded-full ${
+                    delta === 0 ? 'bg-gray-100 text-gray-500' :
+                    good ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-500'
+                  }`}>
+                    <TrendIcon size={11} />
+                    {delta > 0 ? '+' : ''}{delta}%
+                  </span>
+                ) : (
+                  <span className="text-xs text-gray-300">—</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

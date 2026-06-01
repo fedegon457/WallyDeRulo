@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react'
 import { IconX, IconChevronDown } from '@tabler/icons-react'
+import { IconDisplay } from './EmojiPicker'
 
 export function CategorySheet({ categories, value, onChange, onClose }) {
   const [expandedId, setExpandedId] = useState(() => {
@@ -67,7 +68,9 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
                             : 'border-transparent hover:bg-gray-50'
                         }`}
                       >
-                        <span className="text-2xl leading-none">{cat.icon || '📋'}</span>
+                        <span className="text-2xl leading-none flex items-center justify-center w-8 h-8">
+                          {cat.icon ? <IconDisplay icon={cat.icon} size={28} /> : '📋'}
+                        </span>
                         <span className="text-xs font-medium text-gray-700 leading-tight mt-0.5">{cat.name}</span>
                         {catChildren.length > 0 && (
                           <IconChevronDown
@@ -99,7 +102,9 @@ export function CategorySheet({ categories, value, onChange, onClose }) {
                                 : 'border-transparent hover:bg-gray-50'
                             }`}
                           >
-                            <span className="text-2xl leading-none">{child.icon || '📋'}</span>
+                            <span className="text-2xl leading-none flex items-center justify-center w-8 h-8">
+                              {child.icon ? <IconDisplay icon={child.icon} size={28} /> : '📋'}
+                            </span>
                             <span className="text-xs font-medium text-gray-700 leading-tight mt-0.5">{child.name}</span>
                           </button>
                         )

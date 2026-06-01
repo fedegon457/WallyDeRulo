@@ -1,5 +1,6 @@
 ﻿import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './contexts/AuthContext'
+import { ThemeProvider } from './contexts/ThemeContext'
 import { Layout } from './components/layout/Layout'
 import { Login } from './pages/Login'
 import { Dashboard } from './pages/Dashboard'
@@ -13,6 +14,12 @@ import { Cuentas } from './pages/Cuentas'
 import { Tarjetas } from './pages/Tarjetas'
 import { Calculadora } from './pages/Calculadora'
 import { Presupuestos } from './pages/Presupuestos'
+import { MiCuenta } from './pages/MiCuenta'
+import { Privacidad } from './pages/Privacidad'
+import { Terminos } from './pages/Terminos'
+import { Metas } from './pages/Metas'
+import { Deudas } from './pages/Deudas'
+import { Proyeccion } from './pages/Proyeccion'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
@@ -35,6 +42,8 @@ function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/privacidad" element={<Privacidad />} />
+      <Route path="/terminos" element={<Terminos />} />
       <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transacciones" element={<Transacciones />} />
@@ -47,6 +56,10 @@ function AppRoutes() {
         <Route path="/tarjetas" element={<Tarjetas />} />
         <Route path="/calculadora" element={<Calculadora />} />
         <Route path="/presupuestos" element={<Presupuestos />} />
+        <Route path="/mi-cuenta" element={<MiCuenta />} />
+        <Route path="/metas" element={<Metas />} />
+        <Route path="/deudas" element={<Deudas />} />
+        <Route path="/proyeccion" element={<Proyeccion />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
@@ -56,9 +69,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   )
 }
