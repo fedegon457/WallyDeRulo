@@ -33,4 +33,7 @@ export default {
     },
   },
   plugins: [],
+  safelist: [
+    ...Array.from({ length: 101 }, (_, i) => `w-[${i}%]`),
+  ],
 }

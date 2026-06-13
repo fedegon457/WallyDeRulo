@@ -17,6 +17,7 @@ import {
 } from '../lib/creditCard'
 import { parseStatementPDF } from '../lib/pdfParser'
 import { fmt } from '../lib/fmt'
+import { AmountInput } from '../components/ui/Input'
 
 const fmtUSD = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n ?? 0)
@@ -47,21 +48,6 @@ function CycleAmounts({ arsTotal, usdTotal }) {
   return <span>{fmt(arsTotal)}</span>
 }
 
-// ─── NumInput ────────────────────────────────────────────────────────────────
-function NumInput({ label, value, onChange, placeholder, required }) {
-  const display = value ? value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.') : ''
-  return (
-    <div>
-      {label && <label className="block text-xs font-medium text-gray-600 mb-1">{label}</label>}
-      <input
-        type="text" inputMode="numeric" value={display}
-        onChange={e => onChange(e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''))}
-        placeholder={placeholder} required={required}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-      />
-    </div>
-  )
-}
 
 // ─── Badge de estado ──────────────────────────────────────────────────────────
 function StatusBadge({ estado, dueDate }) {
@@ -109,12 +95,11 @@ function CardRow({ card, cycleTx, statements, onSelect, isSelected }) {
   return (
     <button
       onClick={onSelect}
-      className={`w-full text-left rounded-2xl p-4 transition-all ${
+      className={`w-full text-left rounded-2xl p-4 transition-all ${CARD_COLOR_CLASSES[CARD_COLORS.indexOf(card.card_color)] ?? 'bg-slate-800'} ${
         isSelected
           ? 'ring-2 ring-primary-500 ring-offset-2 shadow-md'
           : 'hover:shadow-md hover:scale-[1.01]'
       }`}
-      style={{ background: card.card_color ?? '#1e293b' /* GGA exception: user-picked arbitrary hex from DB */ }}
     >
       {/* Decoracion de fondo */}
       <div className="relative overflow-hidden rounded-xl">
@@ -159,9 +144,7 @@ function CardRow({ card, cycleTx, statements, onSelect, isSelected }) {
           {limitPct !== null && (
             <div>
               <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                {/* GGA exception: dynamic percentage width requires inline style */}
-                <div className={`h-full rounded-full ${limitPct > 80 ? 'bg-red-400' : limitPct > 50 ? 'bg-amber-400' : 'bg-white/70'}`}
-                  style={{ width: `${limitPct}%` }} />
+                <div className={`h-full rounded-full w-[${Math.min(100, Math.round(limitPct))}%] ${limitPct > 80 ? 'bg-red-400' : limitPct > 50 ? 'bg-amber-400' : 'bg-white/70'}`} />
               </div>
               <p className="text-[10px] opacity-40 mt-1">{fmt(arsTotal)} de {fmt(card.credit_limit)} disponibles</p>
             </div>
@@ -294,7 +277,7 @@ function ConfigModal({ card, onSave, onClose }) {
             </div>
           </div>
 
-          <NumInput label="Limite de credito" value={creditLimit} onChange={setCreditLimit} placeholder="Sin limite" />
+          <AmountInput label="Limite de credito" value={creditLimit} onChange={setCreditLimit} placeholder="Sin limite" />
 
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Si el cierre cae en finde/feriado</label>
@@ -465,7 +448,7 @@ function StatementModal({ card, statement, cycleTx, onSave, onClose }) {
                 [cuotas, setCuotas, 'cuotas_periodo', 'Cuotas del periodo'],
                 [ajustes, setAjustes, 'ajustes', 'Intereses / ajustes'],
               ].map(([val, set, field, label]) => (
-                <NumInput key={field} label={`${label}${pdfFields[field] ? ' ok' : ''}`} value={val} onChange={set} placeholder="0" />
+                <AmountInput key={field} label={`${label}${pdfFields[field] ? ' ok' : ''}`} value={val} onChange={set} placeholder="0" />
               ))}
             </div>
             <div className="flex justify-between items-center pt-1 border-t border-gray-200 text-xs">
@@ -475,10 +458,10 @@ function StatementModal({ card, statement, cycleTx, onSave, onClose }) {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <NumInput label={`Total a pagar${pdfFields.total_resumen ? ' ok' : ''}`}
+            <AmountInput label={`Total a pagar${pdfFields.total_resumen ? ' ok' : ''}`}
               value={totalResumen} onChange={setTotalResumen}
               placeholder={String(calcTotal > 0 ? calcTotal : '')} required />
-            <NumInput label={`Pago minimo${pdfFields.pago_minimo ? ' ok' : ''}`}
+            <AmountInput label={`Pago minimo${pdfFields.pago_minimo ? ' ok' : ''}`}
               value={pagoMinimo} onChange={setPagoMinimo} placeholder="Opcional" />
           </div>
 
@@ -548,7 +531,7 @@ function PayModal({ card, statement, accounts, onPay, onClose }) {
             <span className="text-sm text-gray-600">Pendiente</span>
             <span className="font-bold text-orange-600">{fmt(pending)}</span>
           </div>
-          <NumInput label="Monto a pagar" value={amount} onChange={setAmount} required />
+          <AmountInput label="Monto a pagar" value={amount} onChange={setAmount} required />
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Desde cuenta</label>
             <button type="button" onClick={() => setAccountOpen(true)}
@@ -588,7 +571,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
   const today = format(new Date(), 'yyyy-MM-dd')
 
   const cycleTx = transactions.filter(t =>
-    t.payment_method_id === card.id && t.type === 'expense' &&
+    t.payment_method_id === card.id && t.type === 'expense' && !t.transfer_group_id &&
     t.date >= format(cycleStart, 'yyyy-MM-dd') && t.date <= format(cycleEnd, 'yyyy-MM-dd')
   )
 
@@ -733,8 +716,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                       </div>
                       {st.total_resumen > 0 && (
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
-                          {/* GGA exception: dynamic percentage width requires inline style */}
-                          <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                          <div className={`h-full bg-emerald-500 rounded-full w-[${Math.round(pct)}%]`} />
                         </div>
                       )}
                       <div className="flex items-center gap-2">
@@ -773,8 +755,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
-                  {/* GGA exception: dynamic percentage width requires inline style */}
-                  <div className="h-full bg-primary-500 rounded-full" style={{ width: `${(g.done / g.total) * 100}%` }} />
+                  <div className={`h-full bg-primary-500 rounded-full w-[${Math.min(100, Math.round((g.done / g.total) * 100))}%]`} />
                 </div>
                 <div className="space-y-1">
                   {g.pending.slice(0, 4).map(t => (
@@ -856,7 +837,7 @@ export function Tarjetas() {
     }
     const [pmRes, txRes, stRes] = await Promise.all([
       supabase.from('payment_methods').select('id, name, account_type, type, icon, bank_name, card_network, card_color, last_four, closing_day, due_day, credit_limit, weekend_adjustment, expiry_date, security_code').eq('user_id', user.id).order('name'),
-      supabase.from('transactions').select('id, type, amount, date, notes, currency, payment_method_id, transfer_group_id, installment_group_id, categories(name, type, icon)').eq('user_id', user.id).order('date'),
+      supabase.from('transactions').select('id, type, amount, date, notes, currency, payment_method_id, transfer_group_id, installment_group_id, installment_number, installments, categories(name, type, icon)').eq('user_id', user.id).order('date'),
       supabase.from('credit_card_statements').select('id, payment_method_id, period, closing_date, due_date, saldo_anterior, pagos_acreditados, compras_periodo, cuotas_periodo, ajustes, total_resumen, pago_minimo, notas, estado, monto_pagado').eq('user_id', user.id).order('period', { ascending: false }),
     ])
     const all = pmRes.data ?? []
@@ -965,7 +946,7 @@ export function Tarjetas() {
   const totalInstallmentsRemaining = (() => {
     const todayStr = format(new Date(), 'yyyy-MM-dd')
     return transactions
-      .filter(t => t.installment_group_id && t.date > todayStr &&
+      .filter(t => t.installment_group_id && !t.transfer_group_id && t.date > todayStr &&
         cards.some(c => c.id === t.payment_method_id))
       .reduce((s, t) => s + t.amount, 0)
   })()
