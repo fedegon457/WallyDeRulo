@@ -11,10 +11,7 @@ import { CategorySheet } from '../components/ui/CategorySheet'
 import { IconDisplay } from '../components/ui/EmojiPicker'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
+import { fmt } from '../lib/fmt'
 
 function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
   const [paidByMe, setPaidByMe] = useState(true)

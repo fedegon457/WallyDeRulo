@@ -12,9 +12,7 @@ import { AmountInput } from '../components/ui/Input'
 import { IconDisplay } from '../components/ui/EmojiPicker'
 import { format, startOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+import { fmt } from '../lib/fmt'
 
 function ratioColor(ratio) {
   if (ratio >= 1)   return { bar: 'bg-red-500',     text: 'text-red-600',     light: 'bg-red-50',   border: 'border-red-200' }
@@ -27,6 +25,7 @@ function ProgressBar({ spent, limit, thick = false }) {
   const { bar } = ratioColor(ratio)
   return (
     <div className={`bg-gray-100 rounded-full overflow-hidden ${thick ? 'h-3' : 'h-1.5'}`}>
+      {/* GGA exception: dynamic percentage width requires inline style */}
       <div
         className={`h-full rounded-full transition-all ${bar}`}
         style={{ width: `${Math.min(ratio * 100, 100)}%` }}
@@ -161,9 +160,9 @@ export function Presupuestos() {
       return
     }
     const [budRes, catRes, txRes] = await Promise.all([
-      supabase.from('budgets').select('*').eq('user_id', user.id),
-      supabase.from('categories').select('*').eq('user_id', user.id),
-      supabase.from('transactions').select('type, amount, date, category_id')
+      supabase.from('budgets').select('id, amount, category_id').eq('user_id', user.id),
+      supabase.from('categories').select('id, name, type, parent_id, icon').eq('user_id', user.id),
+      supabase.from('transactions').select('type, amount, date, category_id, transfer_group_id')
         .eq('user_id', user.id).gte('date', monthStart),
     ])
     setBudgets(budRes.data ?? [])
@@ -178,13 +177,13 @@ export function Presupuestos() {
   const spentByCategory = useMemo(() => {
     const map = {}
     transactions
-      .filter(t => t.type === 'expense' && t.date >= monthStart)
+      .filter(t => t.type === 'expense' && t.date >= monthStart && !t.transfer_group_id)
       .forEach(t => { if (t.category_id) map[t.category_id] = (map[t.category_id] || 0) + t.amount })
     return map
   }, [transactions, monthStart])
 
   const totalSpent = useMemo(() =>
-    transactions.filter(t => t.type === 'expense' && t.date >= monthStart).reduce((s, t) => s + t.amount, 0),
+    transactions.filter(t => t.type === 'expense' && t.date >= monthStart && !t.transfer_group_id).reduce((s, t) => s + t.amount, 0),
     [transactions, monthStart]
   )
 
@@ -204,7 +203,7 @@ export function Presupuestos() {
       return
     }
     if (modal?.id) {
-      await supabase.from('budgets').update(values).eq('id', modal.id)
+      await supabase.from('budgets').update(values).eq('id', modal.id).eq('user_id', user.id)
     } else {
       await supabase.from('budgets').insert({ ...values, user_id: user.id })
     }
@@ -219,7 +218,7 @@ export function Presupuestos() {
       setBudgets([...demoBudgets])
       return
     }
-    await supabase.from('budgets').delete().eq('id', id)
+    await supabase.from('budgets').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 

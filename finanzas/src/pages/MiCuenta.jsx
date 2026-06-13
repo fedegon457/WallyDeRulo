@@ -12,20 +12,18 @@ import {
   getNotificationStatus, subscribeToNotifications, unsubscribeFromNotifications, isSubscribed
 } from '../lib/notifications'
 import { format } from 'date-fns'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+import { fmt } from '../lib/fmt'
 
 async function exportAllData(userId) {
   const { data: txs } = await supabase
     .from('transactions')
-    .select('*, categories(name, parent_id), payment_methods(name)')
+    .select('id, type, amount, date, notes, transfer_group_id, categories(name, parent_id), payment_methods(name)')
     .eq('user_id', userId)
     .order('date', { ascending: false })
 
   if (!txs?.length) return
 
-  const { data: cats } = await supabase.from('categories').select('*').eq('user_id', userId)
+  const { data: cats } = await supabase.from('categories').select('id, name, parent_id').eq('user_id', userId)
 
   const headers = ['Fecha', 'Tipo', 'Categoría', 'Cuenta', 'Importe', 'Nota']
   const rows = txs.map(t => {
@@ -339,7 +337,7 @@ export function MiCuenta() {
                 onChange={e => setConfirmText(e.target.value)}
                 placeholder="BORRAR"
                 autoFocus
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-amber-200 focus:border-amber-400 outline-none"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-base font-mono focus:ring-2 focus:ring-amber-200 focus:border-amber-400 outline-none"
               />
             </div>
 
@@ -401,7 +399,7 @@ export function MiCuenta() {
                 onChange={e => setConfirmText(e.target.value)}
                 placeholder="ELIMINAR"
                 autoFocus
-                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-red-200 focus:border-red-400 outline-none"
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-base font-mono focus:ring-2 focus:ring-red-200 focus:border-red-400 outline-none"
               />
             </div>
 

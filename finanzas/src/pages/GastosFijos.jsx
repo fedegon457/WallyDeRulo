@@ -15,9 +15,7 @@ import { CustomSelect, buildPmGroups, ACCOUNT_TYPE_LABELS } from '../components/
 import { CategorySheet } from '../components/ui/CategorySheet'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+import { fmt } from '../lib/fmt'
 
 const FREQ_LABELS = { monthly: 'Mensual', yearly: 'Anual', weekly: 'Semanal' }
 

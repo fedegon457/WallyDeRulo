@@ -7,14 +7,13 @@ import { AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { fmt } from '../lib/fmt'
 
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-
-const COLORS = [
-  '#22C55E', '#3B82F6', '#F59E0B', '#EF4444',
-  '#8B5CF6', '#06B6D4', '#EC4899', '#00C4B4',
-]
+const META_COLORS             = ['#22C55E', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#EC4899', '#00C4B4']
+const META_COLOR_CLASSES      = ['bg-green-500',    'bg-blue-500',    'bg-amber-500',    'bg-red-500',    'bg-violet-500',    'bg-cyan-500',    'bg-pink-500',    'bg-primary-500']
+const META_COLOR_TINT_CLASSES = ['bg-green-500/20', 'bg-blue-500/20', 'bg-amber-500/20', 'bg-red-500/20', 'bg-violet-500/20', 'bg-cyan-500/20', 'bg-pink-500/20', 'bg-primary-500/20']
+const META_TEXT_CLASSES       = ['text-green-500',  'text-blue-500',  'text-amber-500',  'text-red-500',  'text-violet-500',  'text-cyan-500',  'text-pink-500',  'text-primary-500']
+const colorIdx = (hex) => { const i = META_COLORS.findIndex(c => c.toLowerCase() === hex?.toLowerCase()); return i >= 0 ? i : 0 }
 
 const demoGoals = [
   { id: 'g1', user_id: 'demo', name: 'Vacaciones 2027',      target_amount: 500000,  current_amount: 125000,  color: '#3B82F6', deadline: '2027-01-15', created_at: '2026-01-01' },
@@ -53,7 +52,7 @@ function GoalForm({ initial, onSave, onCancel }) {
           onChange={e => setName(e.target.value)}
           placeholder="Ej: Vacaciones, Notebook, Auto..."
           required
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -66,7 +65,7 @@ function GoalForm({ initial, onSave, onCancel }) {
             onChange={setTarget}
             required
             placeholder="0"
-            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
@@ -79,7 +78,7 @@ function GoalForm({ initial, onSave, onCancel }) {
             value={current}
             onChange={setCurrent}
             placeholder="0"
-            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
@@ -87,13 +86,12 @@ function GoalForm({ initial, onSave, onCancel }) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">Color</label>
         <div className="flex gap-2 flex-wrap">
-          {COLORS.map(c => (
+          {META_COLORS.map((c, i) => (
             <button
               key={c}
               type="button"
               onClick={() => setColor(c)}
-              className="w-8 h-8 rounded-full border-2 transition flex items-center justify-center"
-              style={{ backgroundColor: c, borderColor: color === c ? '#374151' : 'transparent' }}
+              className={`w-8 h-8 rounded-full border-2 transition flex items-center justify-center ${META_COLOR_CLASSES[i]} ${color === c ? 'border-gray-700' : 'border-transparent'}`}
             >
               {color === c && <IconCheck size={14} className="text-white" strokeWidth={3} />}
             </button>
@@ -107,7 +105,7 @@ function GoalForm({ initial, onSave, onCancel }) {
           type="date"
           value={deadline}
           onChange={e => setDeadline(e.target.value)}
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-700"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-700"
         />
       </div>
 
@@ -156,7 +154,7 @@ function AddFundsModal({ goal, onSave, onClose }) {
               required
               autoFocus
               placeholder="0"
-              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+              className="w-full pl-8 pr-4 py-3 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
             />
           </div>
           <Button type="submit" className="w-full" disabled={saving || !amount}>
@@ -183,7 +181,7 @@ export function Metas() {
     }
     const { data } = await supabase
       .from('savings_goals')
-      .select('*')
+      .select('id, name, target_amount, current_amount, color, deadline, created_at')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
     setGoals(data ?? [])
@@ -205,7 +203,7 @@ export function Metas() {
       return
     }
     if (modal?.id) {
-      await supabase.from('savings_goals').update(values).eq('id', modal.id)
+      await supabase.from('savings_goals').update(values).eq('id', modal.id).eq('user_id', user.id)
     } else {
       await supabase.from('savings_goals').insert({ ...values, user_id: user.id })
     }
@@ -221,7 +219,7 @@ export function Metas() {
       setGoals([...demoGoals])
       return
     }
-    await supabase.from('savings_goals').delete().eq('id', id)
+    await supabase.from('savings_goals').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -232,7 +230,7 @@ export function Metas() {
       setGoals([...demoGoals])
       return
     }
-    await supabase.from('savings_goals').update({ current_amount: newAmount }).eq('id', id)
+    await supabase.from('savings_goals').update({ current_amount: newAmount }).eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -279,11 +277,8 @@ export function Metas() {
           <div key={g.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div
-                  className="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: g.color + '20' }}
-                >
-                  <IconPigMoney size={22} style={{ color: g.color }} />
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${META_COLOR_TINT_CLASSES[colorIdx(g.color)]}`}>
+                  <IconPigMoney size={22} className={META_TEXT_CLASSES[colorIdx(g.color)]} />
                 </div>
                 <div>
                   <p className="font-semibold text-gray-900">{g.name}</p>
@@ -297,8 +292,7 @@ export function Metas() {
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setFundsGoal(g)}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition active:scale-95"
-                  style={{ backgroundColor: g.color }}
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold text-white transition active:scale-95 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
                 >
                   + Abonar
                 </button>
@@ -314,14 +308,15 @@ export function Metas() {
             </div>
 
             <div className="bg-gray-100 rounded-full h-3 overflow-hidden mb-2">
+              {/* GGA exception: dynamic percentage width requires inline style */}
               <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(ratio * 100, 100)}%`, backgroundColor: g.color }}
+                className={`h-full rounded-full transition-all duration-500 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
+                style={{ width: `${Math.min(ratio * 100, 100)}%` }}
               />
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">{fmt(g.current_amount)} ahorrado</span>
-              <span className="font-semibold" style={{ color: g.color }}>{pct}%</span>
+              <span className={`font-semibold ${META_TEXT_CLASSES[colorIdx(g.color)]}`}>{pct}%</span>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-0.5">
               <span>Falta: {fmt(Math.max(g.target_amount - g.current_amount, 0))}</span>

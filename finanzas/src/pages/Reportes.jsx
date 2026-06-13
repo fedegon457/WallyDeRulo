@@ -9,13 +9,10 @@ import {
 import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from 'date-fns'
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react'
 import { es } from 'date-fns/locale'
+import { fmt } from '../lib/fmt'
 
 const COLORS       = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
 const COLOR_CLASSES = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-400', 'bg-red-500', 'bg-violet-500', 'bg-cyan-500', 'bg-pink-500', 'bg-lime-500']
-
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
 
 function SectionTitle({ children }) {
   return <h2 className="text-base font-semibold text-gray-900 mb-4">{children}</h2>

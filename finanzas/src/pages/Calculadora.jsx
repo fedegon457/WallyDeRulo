@@ -5,6 +5,7 @@ import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoPaymentMethods, demoTransactions } from '../lib/demoData'
 import { format, addMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { fmt } from '../lib/fmt'
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -16,9 +17,6 @@ function NumInput({ value, onChange, placeholder, className }) {
   )
 }
 
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
 function fmtPct(n) {
   return `${n.toFixed(2).replace('.', ',')}%`
 }
@@ -96,8 +94,8 @@ export function Calculadora() {
       return
     }
     Promise.all([
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).eq('account_type', 'credit_card').order('name'),
-      supabase.from('transactions').select('*').eq('user_id', user.id),
+      supabase.from('payment_methods').select('id, name, account_type, closing_day, due_day, credit_limit, weekend_adjustment').eq('user_id', user.id).eq('account_type', 'credit_card').order('name'),
+      supabase.from('transactions').select('id, type, amount, date, payment_method_id, transfer_group_id').eq('user_id', user.id),
     ]).then(([{ data: pm }, { data: tx }]) => {
       setCards(pm ?? [])
       setTransactions(tx ?? [])
@@ -197,7 +195,7 @@ export function Calculadora() {
           <div className="flex-1 flex items-center gap-1.5">
             <span className="text-sm text-gray-400">$</span>
             <NumInput value={cashPrice} onChange={setCashPrice} placeholder="0"
-              className="flex-1 text-sm font-medium text-gray-900 bg-transparent border-none outline-none" />
+              className="flex-1 text-base font-medium text-gray-900 bg-transparent border-none outline-none" />
           </div>
         </div>
 
@@ -233,7 +231,7 @@ export function Calculadora() {
             {cuotaMode === 'cuota' ? (
               <>
                 <NumInput value={cuotaAmount} onChange={setCuotaAmount} placeholder="0"
-                  className="flex-1 text-sm font-medium text-gray-900 bg-transparent border-none outline-none" />
+                  className="flex-1 text-base font-medium text-gray-900 bg-transparent border-none outline-none" />
                 {cuotaAmount && (
                   <span className="text-xs text-gray-400 flex-shrink-0">
                     Total {fmt(parseFloat(cuotaAmount) * installments)}
@@ -247,7 +245,7 @@ export function Calculadora() {
                   const perCuota = v ? Math.round(parseFloat(v) / installments) : ''
                   setCuotaAmount(perCuota ? String(perCuota) : '')
                 }} placeholder="0"
-                  className="flex-1 text-sm font-medium text-gray-900 bg-transparent border-none outline-none" />
+                  className="flex-1 text-base font-medium text-gray-900 bg-transparent border-none outline-none" />
                 {totalAmount && (
                   <span className="text-xs text-gray-400 flex-shrink-0">
                     {fmt(parseFloat(cuotaAmount))}/mes
@@ -273,7 +271,7 @@ export function Calculadora() {
             <div className="flex items-center gap-2">
               <input type="number" min="0" max="200" step="0.5" value={customInflation}
                 onChange={e => setCustomInflation(e.target.value)} placeholder="Otro %"
-                className="w-24 text-sm text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-500" />
+                className="w-24 text-base text-gray-900 border border-gray-200 rounded-lg px-3 py-1.5 outline-none focus:ring-2 focus:ring-primary-500" />
               <span className="text-xs text-gray-400">% mensual personalizado</span>
             </div>
           </div>
@@ -308,6 +306,7 @@ export function Calculadora() {
                     const total = Math.min(base + purchase, 100)
                     return (
                       <div className="h-full flex">
+                        {/* GGA exception: dynamic percentage width requires inline style */}
                         <div className="h-full bg-primary-400 rounded-l-full transition-all" style={{ width: `${Math.min(base, 100)}%` }} />
                         {purchase > 0 && (
                           <div className={`h-full transition-all ${cardContext.overLimit ? 'bg-red-400' : 'bg-primary-200'}`}

@@ -7,9 +7,7 @@ import { AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+import { fmt } from '../lib/fmt'
 
 const demoDebts = [
   { id: 'd1', user_id: 'demo', person_name: 'Juan',   description: 'Cena cumpleaños',   amount: 15000, direction: 'lent',     date: '2026-05-15', paid: false, paid_at: null },
@@ -63,7 +61,7 @@ function DebtForm({ initial, onSave, onCancel }) {
           onChange={e => setPerson(e.target.value)}
           placeholder="Nombre..."
           required
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -76,7 +74,7 @@ function DebtForm({ initial, onSave, onCancel }) {
             onChange={setAmount}
             required
             placeholder="0"
-            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            className="w-full pl-8 pr-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
           />
         </div>
       </div>
@@ -88,7 +86,7 @@ function DebtForm({ initial, onSave, onCancel }) {
           value={desc}
           onChange={e => setDesc(e.target.value)}
           placeholder="¿De qué se trata?"
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
         />
       </div>
 
@@ -99,7 +97,7 @@ function DebtForm({ initial, onSave, onCancel }) {
           value={date}
           onChange={e => setDate(e.target.value)}
           required
-          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-700"
+          className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-700"
         />
       </div>
 
@@ -126,7 +124,7 @@ export function Deudas() {
     }
     const { data } = await supabase
       .from('debts')
-      .select('*')
+      .select('id, person_name, description, amount, direction, date, paid, paid_at')
       .eq('user_id', user.id)
       .order('date', { ascending: false })
     setDebts(data ?? [])
@@ -148,7 +146,7 @@ export function Deudas() {
       return
     }
     if (modal?.id) {
-      await supabase.from('debts').update(values).eq('id', modal.id)
+      await supabase.from('debts').update(values).eq('id', modal.id).eq('user_id', user.id)
     } else {
       await supabase.from('debts').insert({ ...values, user_id: user.id })
     }
@@ -163,7 +161,7 @@ export function Deudas() {
       setDebts([...demoDebts])
       return
     }
-    await supabase.from('debts').update({ paid: true, paid_at: format(new Date(), 'yyyy-MM-dd') }).eq('id', id)
+    await supabase.from('debts').update({ paid: true, paid_at: format(new Date(), 'yyyy-MM-dd') }).eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -175,7 +173,7 @@ export function Deudas() {
       setDebts([...demoDebts])
       return
     }
-    await supabase.from('debts').delete().eq('id', id)
+    await supabase.from('debts').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -250,7 +248,7 @@ export function Deudas() {
                   <button
                     onClick={() => markPaid(d.id)}
                     title="Marcar como saldado"
-                    className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-300 hover:text-emerald-500 transition"
+                    className="p-1.5 rounded-lg hover:bg-emerald-50 text-emerald-300 hover:text-emerald-500 transition"
                   >
                     <IconCheck size={14} />
                   </button>

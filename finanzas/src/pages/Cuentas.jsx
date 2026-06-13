@@ -11,8 +11,9 @@ import { demoPaymentMethods, demoTransactions, demoPMAdd, demoPMUpdate, demoPMRe
 import { Button } from '../components/ui/Button'
 import { Input, Select, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
-import { AR_BANKS, CARD_NETWORKS, CARD_COLORS } from '../lib/creditCard'
+import { AR_BANKS, CARD_NETWORKS, CARD_COLORS, CARD_COLOR_CLASSES } from '../lib/creditCard'
 import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
+import { fmt as fmtARS } from '../lib/fmt'
 
 // Main account types — debit_card excluded (created via bank account)
 const ACCOUNT_TYPES = [
@@ -41,9 +42,6 @@ function fmtCurrency(n, currency = 'ARS') {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency, maximumFractionDigits: 2 }).format(n)
 }
 
-function fmtARS(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
 
 // ─── Formulario tarjeta de debito ─────────────────────────────────────────────
 
@@ -92,8 +90,7 @@ function DebitCardForm({ parentAccount, initial, onSave, onCancel }) {
               key={n.value}
               type="button"
               onClick={() => setCardNetwork(n.value)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition ${cardNetwork === n.value ? 'border-current' : 'border-gray-200 text-gray-400'}`}
-              style={cardNetwork === n.value ? { color: n.color, borderColor: n.color, background: n.color + '15' } : {}}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold border-2 transition ${cardNetwork === n.value ? n.activeClass : 'border-gray-200 text-gray-400'}`}
             >
               {n.label}
             </button>
@@ -112,13 +109,12 @@ function DebitCardForm({ parentAccount, initial, onSave, onCancel }) {
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-2">Color</label>
         <div className="flex gap-2 flex-wrap">
-          {CARD_COLORS.map(c => (
+          {CARD_COLORS.map((c, i) => (
             <button
               key={c}
               type="button"
               onClick={() => setCardColor(c)}
-              className={`w-8 h-8 rounded-full border-4 transition ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`}
-              style={{ background: c }}
+              className={`w-8 h-8 rounded-full border-4 transition ${CARD_COLOR_CLASSES[i]} ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`}
             />
           ))}
         </div>
@@ -232,7 +228,7 @@ function AccountForm({ initial, onSave, onCancel }) {
               <select
                 value={bankName}
                 onChange={e => setBankName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white"
               >
                 <option value="">Seleccionar banco</option>
                 {AR_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
@@ -246,8 +242,7 @@ function AccountForm({ initial, onSave, onCancel }) {
                     key={n.value}
                     type="button"
                     onClick={() => setCardNetwork(n.value)}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border-2 transition ${cardNetwork === n.value ? 'border-current' : 'border-gray-200 text-gray-400'}`}
-                    style={cardNetwork === n.value ? { color: n.color, borderColor: n.color, background: n.color + '15' } : {}}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border-2 transition ${cardNetwork === n.value ? n.activeClass : 'border-gray-200 text-gray-400'}`}
                   >
                     {n.label}
                   </button>
@@ -291,7 +286,7 @@ function AccountForm({ initial, onSave, onCancel }) {
                   onChange={e => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
                   placeholder="CVV"
                   maxLength={4}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 pr-9 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 />
                 <button
                   type="button"
@@ -306,11 +301,11 @@ function AccountForm({ initial, onSave, onCancel }) {
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Dia de cierre</label>
-              <input type="number" min="1" max="28" value={closingDay} onChange={e => setClosingDay(e.target.value)} placeholder="Ej: 15" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+              <input type="number" min="1" max="28" value={closingDay} onChange={e => setClosingDay(e.target.value)} placeholder="Ej: 15" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Dia de vencimiento</label>
-              <input type="number" min="1" max="28" value={dueDay} onChange={e => setDueDay(e.target.value)} placeholder="Ej: 22" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+              <input type="number" min="1" max="28" value={dueDay} onChange={e => setDueDay(e.target.value)} placeholder="Ej: 22" className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
             </div>
           </div>
           <div>
@@ -324,8 +319,8 @@ function AccountForm({ initial, onSave, onCancel }) {
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-2">Color de la tarjeta</label>
             <div className="flex gap-2 flex-wrap">
-              {CARD_COLORS.map(c => (
-                <button key={c} type="button" onClick={() => setCardColor(c)} className={`w-8 h-8 rounded-full border-4 transition ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`} style={{ background: c }} />
+              {CARD_COLORS.map((c, i) => (
+                <button key={c} type="button" onClick={() => setCardColor(c)} className={`w-8 h-8 rounded-full border-4 transition ${CARD_COLOR_CLASSES[i]} ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`} />
               ))}
             </div>
           </div>
@@ -391,7 +386,7 @@ export function Cuentas() {
       return
     }
     const [accRes, txRes] = await Promise.all([
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('id, name, account_type, currency, initial_balance, type, icon, parent_account_id, card_color, last_four, card_network, closing_day, due_day, credit_limit, bank_name, weekend_adjustment, expiry_date, security_code').eq('user_id', user.id).order('name'),
       supabase.from('transactions').select('type, amount, payment_method_id').eq('user_id', user.id),
     ])
     setAccounts(accRes.data ?? [])
@@ -416,7 +411,7 @@ export function Cuentas() {
     }
     let error
     if (modal?.id) {
-      ;({ error } = await supabase.from('payment_methods').update(values).eq('id', modal.id))
+      ;({ error } = await supabase.from('payment_methods').update(values).eq('id', modal.id).eq('user_id', user.id))
     } else {
       ;({ error } = await supabase.from('payment_methods').insert({ ...values, user_id: user.id }))
     }
@@ -441,7 +436,7 @@ export function Cuentas() {
     }
     let error
     if (card?.id) {
-      ;({ error } = await supabase.from('payment_methods').update(values).eq('id', card.id))
+      ;({ error } = await supabase.from('payment_methods').update(values).eq('id', card.id).eq('user_id', user.id))
     } else {
       ;({ error } = await supabase.from('payment_methods').insert({ ...values, user_id: user.id }))
     }
@@ -453,7 +448,7 @@ export function Cuentas() {
   const remove = async (id) => {
     if (!confirm('Eliminar esta cuenta?')) return
     if (isDemo(user)) { demoPMRemove(id); setAccounts(prev => prev.filter(a => a.id !== id)); return }
-    await supabase.from('payment_methods').delete().eq('id', id)
+    await supabase.from('payment_methods').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -602,7 +597,8 @@ export function Cuentas() {
                           <div className="mt-3 pt-3 border-t border-gray-50 space-y-2">
                             {linkedCards.map(card => (
                               <div key={card.id} className="flex items-center gap-2 text-xs text-gray-500 group">
-                                <div className="w-6 h-4 rounded flex-shrink-0 border border-black/10" style={{ background: card.card_color ?? '#94a3b8' }} />
+                                {/* GGA exception: DB-stored card_color is a user-picked arbitrary hex */}
+                              <div className="w-6 h-4 rounded flex-shrink-0 border border-black/10" style={{ background: card.card_color ?? '#94a3b8' }} />
                                 <span className="flex-1 truncate">
                                   {card.name}
                                   {card.last_four && <span className="text-gray-400 ml-1">&bull;{card.last_four}</span>}

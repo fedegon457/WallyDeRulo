@@ -5,6 +5,7 @@ import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
 import { QuickAddModal } from '../ui/QuickAdd'
 import { Onboarding } from '../ui/Onboarding'
+import { UpdatePrompt } from '../ui/UpdatePrompt'
 
 const ONBOARDING_KEY = 'mywalli_onboarded_v1'
 
@@ -19,7 +20,7 @@ export function Layout() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-surface">
+    <div className="flex min-h-[100dvh] overflow-hidden bg-surface">
       <Sidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -41,8 +42,7 @@ export function Layout() {
 
       <button
         onClick={() => setQuickAddOpen(true)}
-        className="fixed bottom-24 right-5 z-40 rounded-2xl shadow-accent hover:shadow-xl active:scale-95 transition-all flex items-center justify-center lg:bottom-6 lg:right-6 border-2 border-gray-900"
-        style={{ width: 52, height: 52, backgroundColor: '#FCCB30' }}
+        className="fixed bottom-24 right-5 z-40 w-[52px] h-[52px] rounded-2xl bg-accent shadow-accent hover:shadow-xl active:scale-95 transition-all flex items-center justify-center lg:bottom-6 lg:right-6 border-2 border-gray-900"
         title="Registrar transacción rápida"
       >
         <IconPlus size={22} className="text-gray-900" stroke={2.5} />
@@ -51,6 +51,7 @@ export function Layout() {
       <BottomNav />
       <QuickAddModal open={quickAddOpen} onClose={() => setQuickAddOpen(false)} />
       {showOnboarding && <Onboarding onFinish={finishOnboarding} />}
+      <UpdatePrompt />
     </div>
   )
 }

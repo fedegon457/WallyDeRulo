@@ -24,11 +24,7 @@ export function BottomNav() {
           >
             {({ isActive }) => (
               <div
-                className="flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all"
-                style={isActive
-                  ? { backgroundColor: '#FCCB30', border: '1.5px solid #e6b820' }
-                  : {}
-                }
+                className={`flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-2xl transition-all ${isActive ? 'bg-accent border border-accent/80' : ''}`}
               >
                 <Icon
                   size={18}
@@ -43,7 +39,7 @@ export function BottomNav() {
           </NavLink>
         ))}
       </div>
-      <div className="bg-white" style={{ height: 'env(safe-area-inset-bottom)' }} />
+      <div className="bg-white safe-area-bottom" />
     </nav>
   )
 }

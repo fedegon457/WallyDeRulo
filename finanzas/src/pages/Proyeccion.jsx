@@ -11,9 +11,7 @@ import {
   format, addMonths, startOfMonth, endOfMonth, subMonths,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
+import { fmt } from '../lib/fmt'
 
 function monthlyAmount(re) {
   if (re.frequency === 'monthly') return re.amount
@@ -43,7 +41,7 @@ export function Proyeccion() {
         .eq('user_id', user.id)
         .gte('date', from),
       supabase.from('recurring_expenses')
-        .select('*')
+        .select('id, name, amount, frequency, day_of_month, is_active')
         .eq('user_id', user.id)
         .eq('is_active', true),
     ]).then(([{ data: txs }, { data: res }]) => {

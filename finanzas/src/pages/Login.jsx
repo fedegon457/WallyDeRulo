@@ -33,35 +33,20 @@ export function Login() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
+    <div className="min-h-[100dvh] flex flex-col lg:flex-row">
 
       {/* ── Panel izquierdo / top: brand ─────────────────────────────── */}
-      <div
-        className="lg:w-5/12 flex flex-col justify-between px-10 py-12 relative overflow-hidden"
-        style={{ backgroundColor: '#00C4B4', minHeight: '44vh' }}
-      >
+      <div className="lg:w-5/12 flex flex-col justify-between px-10 py-12 relative overflow-hidden bg-primary-500 min-h-[44vh]">
         {/* Formas decorativas sólidas */}
-        <div
-          className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full border-[6px] border-white/20"
-          style={{ backgroundColor: '#00A99D' }}
-        />
-        <div
-          className="absolute top-20 -right-6 w-24 h-24 rounded-2xl border-4 border-white/20 rotate-12"
-          style={{ backgroundColor: '#009688' }}
-        />
-        <div
-          className="absolute bottom-24 left-8 w-8 h-8 rounded-full border-4 border-white/30"
-          style={{ backgroundColor: '#FCCB30' }}
-        />
+        <div className="absolute -bottom-16 -right-16 w-56 h-56 rounded-full border-[6px] border-white/20 bg-primary-600" />
+        <div className="absolute top-20 -right-6 w-24 h-24 rounded-2xl border-4 border-white/20 rotate-12 bg-primary-700" />
+        <div className="absolute bottom-24 left-8 w-8 h-8 rounded-full border-4 border-white/30 bg-accent" />
         <div className="absolute top-10 right-20 w-3 h-3 rounded-full bg-white/40" />
         <div className="absolute bottom-10 right-32 w-5 h-5 rounded-full bg-white/20" />
 
         {/* Logo */}
         <div className="relative z-10">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-white/30"
-            style={{ backgroundColor: 'rgba(255,255,255,0.15)', transform: 'rotate(-3deg)' }}
-          >
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center border-2 border-white/30 bg-white/15 -rotate-3">
             <IconSparkles size={26} className="text-white" stroke={2} />
           </div>
           <p className="text-white/60 text-xs font-bold uppercase tracking-widest mt-4">MyWalli</p>
@@ -72,10 +57,7 @@ export function Login() {
           <h1 className="text-5xl lg:text-6xl font-extrabold text-white leading-none tracking-tight">
             Tu plata,
           </h1>
-          <h1
-            className="text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight"
-            style={{ color: '#FCCB30' }}
-          >
+          <h1 className="text-5xl lg:text-6xl font-extrabold leading-tight tracking-tight text-accent">
             en orden.
           </h1>
           <p className="text-white/60 text-sm mt-4 font-semibold max-w-xs">
@@ -92,35 +74,23 @@ export function Login() {
       </div>
 
       {/* ── Panel derecho / bottom: form ─────────────────────────────── */}
-      <div
-        className="flex-1 flex items-center justify-center px-6 py-10 lg:py-0"
-        style={{ backgroundColor: '#F2FAFA' }}
-      >
+      <div className="flex-1 flex items-center justify-center px-6 py-10 lg:py-0 bg-surface">
         <div className="w-full max-w-sm">
 
           {/* Card del form */}
-          <div className="bg-white rounded-2xl border-2 border-gray-900 overflow-hidden"
-            style={{ boxShadow: '4px 4px 0px rgba(0,0,0,0.15)' }}>
+          <div className="bg-white rounded-2xl border-2 border-gray-900 overflow-hidden shadow-bold">
 
             {/* Tab switcher */}
             <div className="flex border-b-2 border-gray-900">
               <button
                 onClick={() => setMode('login')}
-                className="flex-1 py-3.5 text-sm font-bold transition-all border-r-2 border-gray-900"
-                style={mode === 'login'
-                  ? { backgroundColor: '#FCCB30', color: '#111' }
-                  : { backgroundColor: 'white', color: '#9ca3af' }
-                }
+                className={`flex-1 py-3.5 text-sm font-bold transition-all border-r-2 border-gray-900 ${mode === 'login' ? 'bg-accent text-dark' : 'bg-white text-gray-400'}`}
               >
                 Iniciar sesión
               </button>
               <button
                 onClick={() => setMode('register')}
-                className="flex-1 py-3.5 text-sm font-bold transition-all"
-                style={mode === 'register'
-                  ? { backgroundColor: '#FCCB30', color: '#111' }
-                  : { backgroundColor: 'white', color: '#9ca3af' }
-                }
+                className={`flex-1 py-3.5 text-sm font-bold transition-all ${mode === 'register' ? 'bg-accent text-dark' : 'bg-white text-gray-400'}`}
               >
                 Registrarse
               </button>
@@ -155,8 +125,7 @@ export function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-3 rounded-xl font-bold text-sm border-2 border-gray-900 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60"
-                  style={{ backgroundColor: '#00C4B4', color: 'white', boxShadow: '2px 2px 0px rgba(0,0,0,0.2)' }}
+                  className="w-full py-3 rounded-xl font-bold text-sm border-2 border-gray-900 transition-all active:scale-95 flex items-center justify-center gap-2 disabled:opacity-60 bg-primary-500 text-white shadow-[2px_2px_0px_rgba(0,0,0,0.2)]"
                 >
                   {loading ? 'Cargando...' : mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
                   {!loading && <IconArrowRight size={16} stroke={2.5} />}

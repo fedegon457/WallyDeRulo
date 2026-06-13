@@ -20,11 +20,12 @@ import { Terminos } from './pages/Terminos'
 import { Metas } from './pages/Metas'
 import { Deudas } from './pages/Deudas'
 import { Proyeccion } from './pages/Proyeccion'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 function PrivateRoute({ children }) {
   const { user, loading } = useAuth()
   if (loading) return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center min-h-[100dvh]">
       <div className="animate-spin w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
@@ -34,7 +35,7 @@ function PrivateRoute({ children }) {
 function AppRoutes() {
   const { user, loading } = useAuth()
   if (loading) return (
-    <div className="flex items-center justify-center h-screen">
+    <div className="flex items-center justify-center min-h-[100dvh]">
       <div className="animate-spin w-10 h-10 border-4 border-primary-600 border-t-transparent rounded-full" />
     </div>
   )
@@ -44,7 +45,7 @@ function AppRoutes() {
       <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/privacidad" element={<Privacidad />} />
       <Route path="/terminos" element={<Terminos />} />
-      <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+      <Route element={<PrivateRoute><ErrorBoundary><Layout /></ErrorBoundary></PrivateRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/transacciones" element={<Transacciones />} />
         <Route path="/categorias" element={<Categorias />} />
@@ -66,7 +67,7 @@ function AppRoutes() {
   )
 }
 
-export default function App() {
+export function App() {
   return (
     <BrowserRouter>
       <ThemeProvider>

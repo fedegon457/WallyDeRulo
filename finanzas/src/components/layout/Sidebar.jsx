@@ -68,11 +68,7 @@ export function Sidebar({ open, onClose }) {
               {({ isActive }) => (
                 <>
                   <div
-                    className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border"
-                    style={isActive
-                      ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' }
-                      : { borderColor: 'transparent' }
-                    }
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}
                   >
                     <Icon size={16} className={isActive ? 'text-gray-900' : 'text-white/75'} stroke={2} />
                   </div>
@@ -94,8 +90,7 @@ export function Sidebar({ open, onClose }) {
           >
             {({ isActive }) => (
               <>
-                <div className="w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border"
-                  style={isActive ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' } : { borderColor: 'transparent' }}>
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}>
                   <IconUserCircle size={16} className={isActive ? 'text-gray-900' : 'text-white/60'} stroke={2} />
                 </div>
                 <span className="flex-1">Mi cuenta</span>
@@ -159,11 +154,7 @@ export function Sidebar({ open, onClose }) {
                   {({ isActive }) => (
                     <>
                       <div
-                        className="w-8 h-8 rounded-xl flex items-center justify-center transition-all border flex-shrink-0"
-                        style={isActive
-                          ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' }
-                          : { backgroundColor: '#f3f4f6', borderColor: 'transparent' }
-                        }
+                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all border flex-shrink-0 ${isActive ? 'bg-accent border-accent/80' : 'bg-gray-100 border-transparent'}`}
                       >
                         <Icon size={16} className={isActive ? 'text-gray-900' : 'text-gray-500'} stroke={2} />
                       </div>

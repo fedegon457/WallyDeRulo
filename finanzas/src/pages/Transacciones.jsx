@@ -12,6 +12,7 @@ import { PaymentMethodSheet } from '../components/ui/PaymentMethodSheet'
 import { ReceiptButton } from '../components/ui/ReceiptButton'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { fmt } from '../lib/fmt'
 
 function FormRow({ label, onClick, children }) {
   return (
@@ -24,11 +25,6 @@ function FormRow({ label, onClick, children }) {
     </div>
   )
 }
-
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
-
 
 function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel, onCreateCategory, userId }) {
   const isTransferInitial = initial?.transfer_group_id != null

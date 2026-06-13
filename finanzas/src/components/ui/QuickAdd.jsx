@@ -48,8 +48,8 @@ export function QuickAddModal({ open, onClose }) {
     if (!user) return
     if (isDemo(user)) { setCategories(demoCategories); setPaymentMethods(demoPaymentMethods); return }
     Promise.all([
-      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('categories').select('id, name, type, parent_id, icon').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('id, name, type, icon, account_type').eq('user_id', user.id).order('name'),
     ]).then(([{ data: cats }, { data: pms }]) => {
       setCategories(cats ?? [])
       setPaymentMethods(pms ?? [])
@@ -180,7 +180,7 @@ export function QuickAddModal({ open, onClose }) {
                     type="date"
                     value={date}
                     onChange={e => setDate(e.target.value)}
-                    className="text-sm text-gray-900 bg-transparent border-none outline-none w-full"
+                    className="text-base text-gray-900 bg-transparent border-none outline-none w-full"
                   />
                 </FormRow>
 
@@ -192,7 +192,7 @@ export function QuickAddModal({ open, onClose }) {
                     onChange={setAmount}
                     placeholder="0"
                     autoFocus
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none"
+                    className="flex-1 text-base text-gray-900 bg-transparent border-none outline-none"
                   />
                 </FormRow>
 
@@ -244,7 +244,7 @@ export function QuickAddModal({ open, onClose }) {
                     {isCreditCard && (
                       <FormRow label="Cuotas">
                         <select value={installments} onChange={e => setInstallments(Number(e.target.value))}
-                          className="text-sm text-gray-900 bg-transparent border-none outline-none">
+                          className="text-base text-gray-900 bg-transparent border-none outline-none">
                           {[1,2,3,6,9,12,18,24].map(n => (
                             <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` - ${txCurrency === 'USD' ? 'US$' : '$'}${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
                           ))}
@@ -261,7 +261,7 @@ export function QuickAddModal({ open, onClose }) {
                     value={notes}
                     onChange={e => setNotes(e.target.value)}
                     placeholder="Descripcion..."
-                    className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none"
+                    className="flex-1 text-base text-gray-900 bg-transparent border-none outline-none"
                   />
                 </FormRow>
               </div>

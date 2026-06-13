@@ -173,15 +173,20 @@ export const AR_BANKS = [
 ]
 
 export const CARD_NETWORKS = [
-  { value: 'visa',       label: 'Visa',        color: '#1A1F71' },
-  { value: 'mastercard', label: 'Mastercard',  color: '#EB001B' },
-  { value: 'amex',       label: 'Amex',        color: '#006FCF' },
-  { value: 'naranja',    label: 'Naranja',      color: '#FF6600' },
-  { value: 'cabal',      label: 'Cabal',        color: '#005DAA' },
-  { value: 'other',      label: 'Otra',         color: '#6B7280' },
+  { value: 'visa',       label: 'Visa',       color: '#1A1F71', activeClass: 'text-blue-900 border-blue-900 bg-blue-900/10' },
+  { value: 'mastercard', label: 'Mastercard', color: '#EB001B', activeClass: 'text-red-600 border-red-600 bg-red-600/10' },
+  { value: 'amex',       label: 'Amex',       color: '#006FCF', activeClass: 'text-blue-600 border-blue-600 bg-blue-600/10' },
+  { value: 'naranja',    label: 'Naranja',    color: '#FF6600', activeClass: 'text-orange-500 border-orange-500 bg-orange-500/10' },
+  { value: 'cabal',      label: 'Cabal',      color: '#005DAA', activeClass: 'text-blue-700 border-blue-700 bg-blue-700/10' },
+  { value: 'other',      label: 'Otra',       color: '#6B7280', activeClass: 'text-gray-500 border-gray-500 bg-gray-500/10' },
 ]
 
 export const CARD_COLORS = [
   '#1e293b', '#1d4ed8', '#0f766e', '#7c3aed',
   '#b91c1c', '#c2410c', '#0369a1', '#166534',
+]
+
+export const CARD_COLOR_CLASSES = [
+  'bg-slate-800', 'bg-blue-700', 'bg-teal-700', 'bg-violet-700',
+  'bg-red-700',   'bg-orange-700', 'bg-sky-700', 'bg-green-800',
 ]

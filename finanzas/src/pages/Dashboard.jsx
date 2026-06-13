@@ -10,8 +10,8 @@ import { es } from 'date-fns/locale'
 import { WelcomeModal } from '../components/ui/WelcomeModal'
 import { OnboardingChecklist } from '../components/ui/OnboardingChecklist'
 import { IconDisplay } from '../components/ui/EmojiPicker'
-
-const COLORS = ['#00C4B4', '#FCCB30', '#22C55E', '#EF4444', '#F59E0B', '#06B6D4', '#EC4899', '#84CC16']
+import { fmt } from '../lib/fmt'
+import { CHART_COLORS, CHART_COLOR_CLASSES } from '../lib/chartColors'
 
 function PieSection({ data }) {
   const [activeIdx, setActiveIdx] = useState(null)
@@ -31,14 +31,13 @@ function PieSection({ data }) {
               outerRadius={props.outerRadius + 8}
               startAngle={props.startAngle} endAngle={props.endAngle}
               fill={props.fill}
-              style={{ filter: `drop-shadow(0px 4px 12px ${props.fill}99)` }}
             />
           )}
           onMouseEnter={(_, i) => setActiveIdx(i)}
           onMouseLeave={() => setActiveIdx(null)}
-          style={{ cursor: 'pointer', outline: 'none' }}
+          className="cursor-pointer outline-none"
         >
-          {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+          {data.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
         </Pie>
         <Tooltip
           cursor={false}
@@ -46,12 +45,11 @@ function PieSection({ data }) {
             if (!active || !payload?.length) return null
             const item = payload[0]
             const idx = data.findIndex(d => d.name === item.name)
-            const color = COLORS[idx % COLORS.length]
             const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0'
             return (
               <div className="bg-white rounded-2xl shadow-xl border border-primary-100 px-4 py-3 min-w-[150px]">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: color }} />
+                  <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${CHART_COLOR_CLASSES[idx % CHART_COLOR_CLASSES.length]}`} />
                   <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
                 </div>
                 <p className="text-lg font-bold text-gray-900">{fmt(item.value)}</p>
@@ -65,9 +63,6 @@ function PieSection({ data }) {
   )
 }
 
-function fmt(n) {
-  return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
-}
 
 function PersonDetailModal({ person, sharedExpenses, onClose }) {
   const owesMe = sharedExpenses
@@ -220,11 +215,11 @@ export function Dashboard() {
 
     const currentPeriod = format(new Date(), 'yyyy-MM')
     Promise.all([
-      supabase.from('transactions').select('type, amount, categories(name, icon)').eq('user_id', user.id).gte('date', from).lte('date', to),
+      supabase.from('transactions').select('type, amount, transfer_group_id, categories(name, icon)').eq('user_id', user.id).gte('date', from).lte('date', to),
       supabase.from('transactions').select('id, type, amount, date, notes, categories(name, type, icon)').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
-      supabase.from('shared_expenses').select('*, participants:shared_expense_participants(*, payments:shared_expense_payments(*))').eq('user_id', user.id),
-      supabase.from('recurring_expenses').select('*').eq('user_id', user.id).eq('is_active', true).order('name'),
-      supabase.from('recurring_expense_payments').select('*').eq('user_id', user.id).eq('period', currentPeriod),
+      supabase.from('shared_expenses').select('id, participants:shared_expense_participants(name, amount_owed, payments:shared_expense_payments(amount))').eq('user_id', user.id),
+      supabase.from('recurring_expenses').select('id, name, amount, icon').eq('user_id', user.id).eq('is_active', true).order('name'),
+      supabase.from('recurring_expense_payments').select('recurring_expense_id').eq('user_id', user.id).eq('period', currentPeriod),
       supabase.from('payment_methods').select('id').eq('user_id', user.id).limit(1),
       supabase.from('budgets').select('id').eq('user_id', user.id).limit(1),
     ]).then(([{ data: txs }, { data: rec }, { data: shared }, { data: recurring }, { data: recPays }, { data: accts }, { data: budgets }]) => {
@@ -287,7 +282,7 @@ export function Dashboard() {
       <div className="bg-primary-500 rounded-2xl p-6 text-white border-2 border-primary-600">
         <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Balance del mes</p>
         <p className="text-4xl font-extrabold tracking-tight leading-none mb-2">{fmt(balance)}</p>
-        <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-900 border border-yellow-400 capitalize" style={{ backgroundColor: '#FCCB30' }}>{mes}</span>
+        <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-900 border border-yellow-400 bg-accent capitalize">{mes}</span>
         <div className="grid grid-cols-3 gap-2 mt-5">
           <div className="bg-white/15 rounded-xl p-3 border border-white/20">
             <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">Ingresos</p>
@@ -323,7 +318,7 @@ export function Dashboard() {
                 {data.byCategory.map((cat, i) => (
                   <div key={cat.name} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
-                      <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                      <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${CHART_COLOR_CLASSES[i % CHART_COLOR_CLASSES.length]}`} />
                       <span className="text-gray-600 font-medium">{cat.name}</span>
                     </div>
                     <span className="font-bold text-gray-900">{fmt(cat.value)}</span>

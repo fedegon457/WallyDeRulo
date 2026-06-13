@@ -13,12 +13,10 @@ import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoPaymentMethods, demoTransactions, demoStatements } from '../lib/demoData'
 import {
   getCurrentCycle, getUpcomingPeriods, getCycleDateRange,
-  projectInstallmentsByPeriod, CARD_NETWORKS, AR_BANKS, CARD_COLORS,
+  projectInstallmentsByPeriod, CARD_NETWORKS, AR_BANKS, CARD_COLORS, CARD_COLOR_CLASSES,
 } from '../lib/creditCard'
 import { parseStatementPDF } from '../lib/pdfParser'
-
-const fmt = (n) =>
-  new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n ?? 0)
+import { fmt } from '../lib/fmt'
 
 const fmtUSD = (n) =>
   new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 2 }).format(n ?? 0)
@@ -59,7 +57,7 @@ function NumInput({ label, value, onChange, placeholder, required }) {
         type="text" inputMode="numeric" value={display}
         onChange={e => onChange(e.target.value.replace(/\./g, '').replace(/[^\d]/g, ''))}
         placeholder={placeholder} required={required}
-        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent"
       />
     </div>
   )
@@ -116,12 +114,11 @@ function CardRow({ card, cycleTx, statements, onSelect, isSelected }) {
           ? 'ring-2 ring-primary-500 ring-offset-2 shadow-md'
           : 'hover:shadow-md hover:scale-[1.01]'
       }`}
-      style={{ background: card.card_color ?? '#1e293b' }}
+      style={{ background: card.card_color ?? '#1e293b' /* GGA exception: user-picked arbitrary hex from DB */ }}
     >
       {/* Decoracion de fondo */}
       <div className="relative overflow-hidden rounded-xl">
-        <div className="absolute top-0 right-0 w-28 h-28 rounded-full opacity-10 pointer-events-none"
-          style={{ background: 'white', transform: 'translate(30%,-30%)' }} />
+        <div className="absolute top-0 right-0 w-28 h-28 rounded-full opacity-10 pointer-events-none bg-white translate-x-[30%] -translate-y-[30%]" />
 
         <div className="relative z-10 text-white">
           {/* Header */}
@@ -162,11 +159,9 @@ function CardRow({ card, cycleTx, statements, onSelect, isSelected }) {
           {limitPct !== null && (
             <div>
               <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                <div className="h-full rounded-full"
-                  style={{
-                    width: `${limitPct}%`,
-                    background: limitPct > 80 ? '#f87171' : limitPct > 50 ? '#fbbf24' : 'rgba(255,255,255,0.7)'
-                  }} />
+                {/* GGA exception: dynamic percentage width requires inline style */}
+                <div className={`h-full rounded-full ${limitPct > 80 ? 'bg-red-400' : limitPct > 50 ? 'bg-amber-400' : 'bg-white/70'}`}
+                  style={{ width: `${limitPct}%` }} />
               </div>
               <p className="text-[10px] opacity-40 mt-1">{fmt(arsTotal)} de {fmt(card.credit_limit)} disponibles</p>
             </div>
@@ -236,7 +231,7 @@ function ConfigModal({ card, onSave, onClose }) {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Banco</label>
               <select value={bankName} onChange={e => setBankName(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 bg-white">
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 bg-white">
                 <option value="">Seleccionar</option>
                 {AR_BANKS.map(b => <option key={b} value={b}>{b}</option>)}
               </select>
@@ -246,8 +241,7 @@ function ConfigModal({ card, onSave, onClose }) {
               <div className="flex gap-1 flex-wrap">
                 {CARD_NETWORKS.map(n => (
                   <button key={n.value} type="button" onClick={() => setCardNetwork(n.value)}
-                    className={`px-2 py-1 rounded-md text-xs font-bold border-2 transition ${cardNetwork === n.value ? 'border-current' : 'border-gray-200 text-gray-400'}`}
-                    style={cardNetwork === n.value ? { color: n.color, borderColor: n.color, background: n.color + '15' } : {}}>
+                    className={`px-2 py-1 rounded-md text-xs font-bold border-2 transition ${cardNetwork === n.value ? n.activeClass : 'border-gray-200 text-gray-400'}`}>
                     {n.label}
                   </button>
                 ))}
@@ -261,21 +255,21 @@ function ConfigModal({ card, onSave, onClose }) {
               <input type="text" inputMode="numeric" value={lastFour}
                 onChange={e => setLastFour(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="0000"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Vencimiento</label>
               <input type="text" inputMode="numeric" value={expiryDate}
                 onChange={e => handleExpiry(e.target.value)}
                 placeholder="MM/YY" maxLength={5}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base font-mono focus:ring-2 focus:ring-primary-500" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">CVV</label>
               <input type="text" inputMode="numeric" value={securityCode}
                 onChange={e => setSecurityCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 placeholder="..."
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base font-mono focus:ring-2 focus:ring-primary-500" />
             </div>
           </div>
 
@@ -290,13 +284,13 @@ function ConfigModal({ card, onSave, onClose }) {
               <label className="block text-xs font-medium text-gray-600 mb-1">Dia de cierre</label>
               <input type="number" min="1" max="28" value={closingDay}
                 onChange={e => setClosingDay(e.target.value)} placeholder="Ej: 15"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500" />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Dia de vencimiento</label>
               <input type="number" min="1" max="28" value={dueDay}
                 onChange={e => setDueDay(e.target.value)} placeholder="Ej: 22"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500" />
             </div>
           </div>
 
@@ -317,10 +311,9 @@ function ConfigModal({ card, onSave, onClose }) {
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-2">Color de la tarjeta</label>
             <div className="flex gap-2 flex-wrap items-center">
-              {CARD_COLORS.map(c => (
+              {CARD_COLORS.map((c, i) => (
                 <button key={c} type="button" onClick={() => setCardColor(c)}
-                  className={`w-8 h-8 rounded-full border-4 transition ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`}
-                  style={{ background: c }} />
+                  className={`w-8 h-8 rounded-full border-4 transition ${CARD_COLOR_CLASSES[i]} ${cardColor === c ? 'border-white ring-2 ring-gray-400 scale-110' : 'border-transparent'}`} />
               ))}
               <input type="color" value={cardColor} onChange={e => setCardColor(e.target.value)}
                 className="w-8 h-8 rounded-full overflow-hidden cursor-pointer border-2 border-gray-200" />
@@ -448,17 +441,17 @@ function StatementModal({ card, statement, cycleTx, onSave, onClose }) {
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">Periodo</label>
               <input type="month" value={period} onChange={e => setPeriod(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" />
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500" />
             </div>
             <div>
               <label className={`block text-xs font-medium mb-1 ${pdfFields.closing_date ? 'text-emerald-600' : 'text-gray-600'}`}>Cierre {pdfFields.closing_date && 'ok'}</label>
               <input type="date" value={closingDateStr} onChange={e => setClosingDateStr(e.target.value)}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 ${pdfFields.closing_date ? 'border-emerald-300 bg-emerald-50' : 'border-gray-300'}`} />
+                className={`w-full border rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 ${pdfFields.closing_date ? 'border-emerald-300 bg-emerald-50' : 'border-gray-300'}`} />
             </div>
             <div>
               <label className={`block text-xs font-medium mb-1 ${pdfFields.due_date ? 'text-emerald-600' : 'text-gray-600'}`}>Vencimiento {pdfFields.due_date && 'ok'}</label>
               <input type="date" value={dueDateStr} onChange={e => setDueDateStr(e.target.value)}
-                className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 ${pdfFields.due_date ? 'border-emerald-300 bg-emerald-50' : 'border-gray-300'}`} />
+                className={`w-full border rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 ${pdfFields.due_date ? 'border-emerald-300 bg-emerald-50' : 'border-gray-300'}`} />
             </div>
           </div>
 
@@ -506,7 +499,7 @@ function StatementModal({ card, statement, cycleTx, onSave, onClose }) {
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Notas</label>
             <textarea value={notas} onChange={e => setNotas(e.target.value)} rows={2} placeholder="Observaciones opcionales..."
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 resize-none" />
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 resize-none" />
           </div>
         </div>
 
@@ -572,7 +565,7 @@ function PayModal({ card, statement, accounts, onPay, onClose }) {
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">Fecha de pago</label>
             <input type="date" value={date} onChange={e => setDate(e.target.value)}
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500" />
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500" />
           </div>
         </div>
         <div className="px-5 pb-5 flex gap-2">
@@ -740,6 +733,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                       </div>
                       {st.total_resumen > 0 && (
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden mb-3">
+                          {/* GGA exception: dynamic percentage width requires inline style */}
                           <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
                         </div>
                       )}
@@ -779,6 +773,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                   </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                  {/* GGA exception: dynamic percentage width requires inline style */}
                   <div className="h-full bg-primary-500 rounded-full" style={{ width: `${(g.done / g.total) * 100}%` }} />
                 </div>
                 <div className="space-y-1">
@@ -860,9 +855,9 @@ export function Tarjetas() {
       return
     }
     const [pmRes, txRes, stRes] = await Promise.all([
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('transactions').select('*, categories(name, type, icon)').eq('user_id', user.id).order('date'),
-      supabase.from('credit_card_statements').select('*').eq('user_id', user.id).order('period', { ascending: false }),
+      supabase.from('payment_methods').select('id, name, account_type, type, icon, bank_name, card_network, card_color, last_four, closing_day, due_day, credit_limit, weekend_adjustment, expiry_date, security_code').eq('user_id', user.id).order('name'),
+      supabase.from('transactions').select('id, type, amount, date, notes, currency, payment_method_id, transfer_group_id, installment_group_id, categories(name, type, icon)').eq('user_id', user.id).order('date'),
+      supabase.from('credit_card_statements').select('id, payment_method_id, period, closing_date, due_date, saldo_anterior, pagos_acreditados, compras_periodo, cuotas_periodo, ajustes, total_resumen, pago_minimo, notas, estado, monto_pagado').eq('user_id', user.id).order('period', { ascending: false }),
     ])
     const all = pmRes.data ?? []
     const cc = all.filter(p => p.account_type === 'credit_card')
@@ -878,7 +873,7 @@ export function Tarjetas() {
   useEffect(() => { if (user) load() }, [user])
 
   const saveConfig = async (values) => {
-    if (!isDemo(user)) await supabase.from('payment_methods').update(values).eq('id', selectedCard.id)
+    if (!isDemo(user)) await supabase.from('payment_methods').update(values).eq('id', selectedCard.id).eq('user_id', user.id)
     setModal(null)
     load()
   }
@@ -891,7 +886,7 @@ export function Tarjetas() {
       return
     }
     if (modal?.data?.id) {
-      await supabase.from('credit_card_statements').update(values).eq('id', modal.data.id)
+      await supabase.from('credit_card_statements').update(values).eq('id', modal.data.id).eq('user_id', user.id)
     } else {
       await supabase.from('credit_card_statements').insert({ ...values, user_id: user.id, payment_method_id: selectedCard.id })
     }
@@ -910,7 +905,7 @@ export function Tarjetas() {
     }
     const tgid = crypto.randomUUID()
     await Promise.all([
-      supabase.from('credit_card_statements').update({ monto_pagado: newPaid, fecha_pago: date, estado: newEstado }).eq('id', st.id),
+      supabase.from('credit_card_statements').update({ monto_pagado: newPaid, fecha_pago: date, estado: newEstado }).eq('id', st.id).eq('user_id', user.id),
       supabase.from('transactions').insert([
         { user_id: user.id, type: 'expense', amount, date, payment_method_id: source_id,
           notes: `Pago resumen ${fmtPeriod(st.period)} - ${selectedCard.name}`, transfer_group_id: tgid },
@@ -925,7 +920,7 @@ export function Tarjetas() {
     if (!card.closing_day) return []
     const { cycleStart, cycleEnd } = getCurrentCycle(card)
     return transactions.filter(t =>
-      t.payment_method_id === card.id && t.type === 'expense' &&
+      t.payment_method_id === card.id && t.type === 'expense' && !t.transfer_group_id &&
       t.date >= format(cycleStart, 'yyyy-MM-dd') && t.date <= format(cycleEnd, 'yyyy-MM-dd')
     )
   }

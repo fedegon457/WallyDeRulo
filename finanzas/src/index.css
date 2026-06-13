@@ -104,3 +104,6 @@ html.dark input[type="month"]   { color-scheme: dark; }
 
 /* Focus ring offset visible on dark */
 html.dark .focus\:ring-offset-2:focus { --tw-ring-offset-color: #1e293b; }
+
+/* iOS safe area spacer */
+.safe-area-bottom { height: env(safe-area-inset-bottom, 0px); }
