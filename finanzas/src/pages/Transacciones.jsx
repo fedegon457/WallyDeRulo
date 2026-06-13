@@ -30,7 +30,7 @@ function fmt(n) {
 }
 
 
-function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel }) {
+function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel, onCreateCategory, userId }) {
   const isTransferInitial = initial?.transfer_group_id != null
   const [type, setType] = useState(isTransferInitial ? 'transfer' : (initial?.type ?? 'expense'))
   const [amount, setAmount] = useState(initial?.amount ?? '')
@@ -87,14 +87,14 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
         <div className="mb-5">
           <FormRow label="Fecha">
             <input type="date" value={date} onChange={e => setDate(e.target.value)} required
-              className="text-sm text-gray-900 bg-transparent border-none outline-none w-full" />
+              className="text-base text-gray-900 bg-transparent border-none outline-none w-full" />
           </FormRow>
 
           <FormRow label="Importe">
             <span className="text-sm text-gray-400">$</span>
             <AmountInput value={amount} onChange={setAmount}
               required placeholder="0" autoFocus
-              className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none" />
+              className="flex-1 text-base text-gray-900 bg-transparent border-none outline-none" />
           </FormRow>
 
           {type === 'transfer' ? (
@@ -138,7 +138,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
               {type === 'expense' && selectedPM?.account_type === 'credit_card' && (
                 <FormRow label="Cuotas">
                   <select value={installments} onChange={e => setInstallments(Number(e.target.value))}
-                    className="text-sm text-gray-900 bg-transparent border-none outline-none">
+                    className="text-base text-gray-900 bg-transparent border-none outline-none">
                     {[1,2,3,6,9,12,18,24].map(n => (
                       <option key={n} value={n}>{n === 1 ? 'Sin cuotas' : `${n} cuotas${amount ? ` · $${Math.round(parseFloat(amount||0)/n).toLocaleString('es-AR')}/mes` : ''}`}</option>
                     ))}
@@ -151,7 +151,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
           <FormRow label="Nota">
             <input type="text" value={notes} onChange={e => setNotes(e.target.value)}
               placeholder="Descripción..."
-              className="flex-1 text-sm text-gray-900 bg-transparent border-none outline-none" />
+              className="flex-1 text-base text-gray-900 bg-transparent border-none outline-none" />
           </FormRow>
         </div>
 
@@ -161,7 +161,7 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
         </div>
       </form>
 
-      {catOpen && <CategorySheet categories={visibleCategories} value={categoryId} onChange={setCategoryId} onClose={() => setCatOpen(false)} />}
+      {catOpen && <CategorySheet categories={visibleCategories} value={categoryId} onChange={setCategoryId} onClose={() => setCatOpen(false)} onCreateCategory={onCreateCategory} userId={userId} type={type} />}
       {accountOpen && <PaymentMethodSheet title="Cuenta" value={paymentMethodId} paymentMethods={paymentMethods} onChange={setPaymentMethodId} onClose={() => setAccountOpen(false)} />}
       {fromOpen && <PaymentMethodSheet title="Cuenta origen" value={fromAccountId} paymentMethods={paymentMethods} onChange={setFromAccountId} onClose={() => setFromOpen(false)} />}
       {toOpen && <PaymentMethodSheet title="Cuenta destino" value={toAccountId} paymentMethods={paymentMethods} onChange={setToAccountId} onClose={() => setToOpen(false)} />}
@@ -190,12 +190,12 @@ export function Transacciones() {
     }
     const [txRes, catRes, pmRes] = await Promise.all([
       supabase.from('transactions')
-        .select('*, categories(id, name, parent_id, type, icon), payment_methods(id, name, type)')
+        .select('id, type, amount, date, category_id, payment_method_id, notes, transfer_group_id, receipt_url, created_at, categories(id, name, parent_id, type, icon), payment_methods(id, name, type)')
         .eq('user_id', user.id)
         .order('date', { ascending: false })
         .order('created_at', { ascending: false }),
-      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('id, name, type, icon, account_type').eq('user_id', user.id).order('name'),
     ])
     setTransactions(txRes.data ?? [])
     setCategories(catRes.data ?? [])
@@ -205,8 +205,47 @@ export function Transacciones() {
 
   useEffect(() => { if (user) load() }, [user])
 
+  const buildOptimistic = (values) => {
+    const cat = categories.find(c => c.id === values.category_id)
+    const pm  = paymentMethods.find(m => m.id === values.payment_method_id)
+    return {
+      id: `optimistic_${Date.now()}`,
+      user_id: user.id,
+      type: values.type,
+      amount: values.amount,
+      date: values.date,
+      category_id: values.category_id || null,
+      payment_method_id: values.payment_method_id || null,
+      notes: values.notes || null,
+      transfer_group_id: null,
+      categories: cat ? { id: cat.id, name: cat.name, parent_id: cat.parent_id, type: cat.type, icon: cat.icon } : null,
+      payment_methods: pm ? { id: pm.id, name: pm.name, type: pm.type } : null,
+      created_at: new Date().toISOString(),
+    }
+  }
+
   const save = async (values) => {
     if (isDemo(user)) { setModal(null); return }
+
+    const isSimple = !values.isTransfer && values.installments <= 1
+    if (isSimple) {
+      if (!modal?.id) {
+        setTransactions(prev => [buildOptimistic(values), ...prev])
+      } else {
+        const cat = categories.find(c => c.id === values.category_id)
+        const pm  = paymentMethods.find(m => m.id === values.payment_method_id)
+        setTransactions(prev => prev.map(t =>
+          t.id === modal.id
+            ? { ...t, ...values,
+                categories: cat ? { id: cat.id, name: cat.name, parent_id: cat.parent_id, type: cat.type, icon: cat.icon } : t.categories,
+                payment_methods: pm ? { id: pm.id, name: pm.name, type: pm.type } : t.payment_methods,
+              }
+            : t
+        ))
+      }
+    }
+    setModal(null)
+
     if (values.isTransfer) {
       const groupId = crypto.randomUUID()
       const fromName = paymentMethods.find(m => m.id === values.fromAccountId)?.name ?? ''
@@ -233,12 +272,11 @@ export function Transacciones() {
       await supabase.from('transactions').insert(rows)
     } else if (modal?.id) {
       const { installments: _, ...rest } = values
-      await supabase.from('transactions').update(rest).eq('id', modal.id)
+      await supabase.from('transactions').update(rest).eq('id', modal.id).eq('user_id', user.id)
     } else {
       const { installments: _, ...rest } = values
       await supabase.from('transactions').insert({ ...rest, user_id: user.id })
     }
-    setModal(null)
     load()
   }
 
@@ -250,11 +288,17 @@ export function Transacciones() {
     if (!confirm('¿Eliminar esta transacción?')) return
     const tx = transactions.find(t => t.id === id)
     if (tx?.transfer_group_id) {
-      await supabase.from('transactions').delete().eq('transfer_group_id', tx.transfer_group_id)
+      setTransactions(prev => prev.filter(t => t.transfer_group_id !== tx.transfer_group_id))
+      await supabase.from('transactions').delete().eq('transfer_group_id', tx.transfer_group_id).eq('user_id', user.id)
     } else {
-      await supabase.from('transactions').delete().eq('id', id)
+      setTransactions(prev => prev.filter(t => t.id !== id))
+      await supabase.from('transactions').delete().eq('id', id).eq('user_id', user.id)
     }
     load()
+  }
+
+  const handleCreateCategory = (newCat) => {
+    setCategories(prev => [...prev, newCat])
   }
 
   const filtered = transactions.filter(t => {
@@ -433,6 +477,8 @@ export function Transacciones() {
             paymentMethods={paymentMethods}
             onSave={save}
             onCancel={() => setModal(null)}
+            onCreateCategory={handleCreateCategory}
+            userId={user?.id}
           />
         )}
       </Modal>

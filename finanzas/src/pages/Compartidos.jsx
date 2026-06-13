@@ -38,7 +38,7 @@ function NewExpenseForm({ categories, paymentMethods, onSave, onCancel }) {
   const splitEvenly = () => {
     const total = parseFloat(totalAmount)
     if (!total || participants.length === 0) return
-    const each = (total / participants.length).toFixed(2)
+    const each = String(Math.round(total / participants.length))
     setParticipants(p => p.map(item => ({ ...item, amount: each })))
   }
 
@@ -288,7 +288,7 @@ function ExpenseCard({ expense, paymentMethods, onDelete, onRefresh, userId }) {
 
   const registerMyPayment = async (id, values) => {
     const { payment_method_id, ...updateData } = values
-    await supabase.from('shared_expenses').update(updateData).eq('id', id)
+    await supabase.from('shared_expenses').update(updateData).eq('id', id).eq('user_id', userId)
     await supabase.from('transactions').insert({
       user_id: userId,
       type: 'expense',
@@ -442,10 +442,10 @@ export function Compartidos() {
     }
     const [{ data: exp }, { data: cats }, { data: pms }] = await Promise.all([
       supabase.from('shared_expenses')
-        .select(`*, participants:shared_expense_participants(*, payments:shared_expense_payments(*))`)
+        .select(`id, description, total_amount, date, notes, paid_by_me, paid_by_name, user_share, user_paid_back, user_paid_back_date, user_paid_back_notes, category_id, payment_method_id, participants:shared_expense_participants(id, name, amount_owed, payments:shared_expense_payments(id, amount, date, notes))`)
         .eq('user_id', user.id).order('date', { ascending: false }),
-      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
+      supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('id, name, type, icon, account_type').eq('user_id', user.id).order('name'),
     ])
     setExpenses(exp ?? [])
     setCategories(cats ?? [])
@@ -459,7 +459,7 @@ export function Compartidos() {
     const { data: expense } = await supabase
       .from('shared_expenses')
       .insert({ ...values, user_id: user.id })
-      .select().single()
+      .select('id, category_id, payment_method_id, paid_by_me, description').single()
 
     if (expense) {
       if (participants.length > 0) {
@@ -486,7 +486,7 @@ export function Compartidos() {
 
   const deleteExpense = async (id) => {
     if (!confirm('¿Eliminar este gasto compartido?')) return
-    await supabase.from('shared_expenses').delete().eq('id', id)
+    await supabase.from('shared_expenses').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 

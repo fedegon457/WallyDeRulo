@@ -4,7 +4,7 @@ function fmtAmt(raw) {
   return digits.replace(/\B(?=(\d{3})+(?!\d))/g, '.')
 }
 
-const inputBase = 'w-full border-2 rounded-xl px-3 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition bg-white'
+const inputBase = 'w-full border-2 rounded-xl px-3 py-2.5 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-500 transition bg-white'
 
 export function AmountInput({ label, error, className = '', value, onChange, ...props }) {
   const handleChange = (e) => {

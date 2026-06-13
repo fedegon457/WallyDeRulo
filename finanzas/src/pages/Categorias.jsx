@@ -1,5 +1,5 @@
 ﻿import { useEffect, useState } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconChevronRight, IconTag, IconRefresh, IconCheck, IconX } from '@tabler/icons-react'
+import { IconPlus, IconPencil, IconTrash, IconChevronRight, IconTag, IconRefresh, IconCheck, IconX, IconCash } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import { demoCategories, demoPaymentMethods, demoCatAdd, demoCatUpdate, demoCatRemove, demoREAdd } from '../lib/demoData'
@@ -7,8 +7,97 @@ import { Button } from '../components/ui/Button'
 import { Input, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
+import { format } from 'date-fns'
 
 const FREQ_LABELS = { monthly: 'Mensual', weekly: 'Semanal', yearly: 'Anual' }
+
+function QuickPayModal({ category, onSave, onClose }) {
+  const [amount, setAmount] = useState('')
+  const [date, setDate]     = useState(format(new Date(), 'yyyy-MM-dd'))
+  const [notes, setNotes]   = useState('')
+  const [saving, setSaving] = useState(false)
+  const [error, setError]   = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!amount) { setError('Ingresá un importe'); return }
+    setSaving(true)
+    await onSave({ category_id: category.id, amount: parseFloat(amount), date, notes: notes || null })
+    setSaving(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white/85 backdrop-blur-2xl border border-white/40 w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl shadow-2xl p-5 space-y-4">
+        <div className="w-10 h-1 bg-gray-400/40 rounded-full mx-auto sm:hidden" />
+
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 bg-primary-50 rounded-xl flex items-center justify-center flex-shrink-0">
+            {category.icon
+              ? <IconDisplay icon={category.icon} size={24} />
+              : <span className="text-xl">📋</span>
+            }
+          </div>
+          <div>
+            <p className="font-semibold text-gray-900">{category.name}</p>
+            <p className="text-xs text-gray-400">Registrar gasto</p>
+          </div>
+          <button type="button" onClick={onClose} className="ml-auto p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+            <IconX size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Importe</label>
+            <div className="relative">
+              <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 font-medium text-sm select-none">$</span>
+              <AmountInput
+                value={amount}
+                onChange={(v) => { setAmount(v); setError('') }}
+                required
+                autoFocus
+                placeholder="0"
+                className={`w-full pl-8 pr-4 py-3 text-lg font-semibold border rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none ${error ? 'border-red-300 bg-red-50' : 'border-gray-200'}`}
+              />
+            </div>
+            {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Fecha</label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              required
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-gray-700"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nota (opcional)</label>
+            <input
+              type="text"
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Descripción..."
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none"
+            />
+          </div>
+
+          <div className="flex gap-2 pt-1">
+            <Button type="button" variant="secondary" onClick={onClose} className="flex-1">Cancelar</Button>
+            <Button type="submit" className="flex-1" disabled={saving}>
+              {saving ? 'Registrando...' : 'Registrar gasto'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
 
 // ─── Fila de subcategoría en modo display ────────────────────────────────────
 function SubcategoryRow({ sub, onEdit, onDelete }) {
@@ -30,7 +119,7 @@ function SubcategoryRow({ sub, onEdit, onDelete }) {
         </button>
         <button
           onClick={onDelete}
-          className="p-1 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+          className="p-1 rounded-lg hover:bg-red-50 text-red-300 hover:text-red-500 transition-colors"
         >
           <IconTrash size={13} />
         </button>
@@ -61,7 +150,7 @@ function SubcategoryInput({ initial, onSave, onCancel }) {
         value={name}
         onChange={e => setName(e.target.value)}
         placeholder="Nombre de la subcategoría..."
-        className="flex-1 text-sm bg-transparent outline-none text-gray-700 placeholder-gray-400"
+        className="flex-1 text-base bg-transparent outline-none text-gray-700 placeholder-gray-400"
       />
       <button
         type="submit"
@@ -102,7 +191,7 @@ function SubcategoriesManager({ parent, categories, user, onRefresh }) {
     if (isDemo(user)) {
       demoCatUpdate(sub.id, { name, icon: icon || null })
     } else {
-      await supabase.from('categories').update({ name, icon: icon || null }).eq('id', sub.id)
+      await supabase.from('categories').update({ name, icon: icon || null }).eq('id', sub.id).eq('user_id', user.id)
     }
     setEditingId(null)
     onRefresh()
@@ -113,7 +202,7 @@ function SubcategoriesManager({ parent, categories, user, onRefresh }) {
     if (isDemo(user)) {
       demoCatRemove(sub.id)
     } else {
-      await supabase.from('categories').delete().eq('id', sub.id)
+      await supabase.from('categories').delete().eq('id', sub.id).eq('user_id', user.id)
     }
     onRefresh()
   }
@@ -313,7 +402,7 @@ function CategoryForm({ initial, parents, paymentMethods, lockAsParent, onSave, 
                   <select
                     value={frequency}
                     onChange={e => setFrequency(e.target.value)}
-                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 bg-white"
+                    className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 bg-white"
                   >
                     <option value="monthly">Mensual</option>
                     <option value="yearly">Anual</option>
@@ -337,7 +426,7 @@ function CategoryForm({ initial, parents, paymentMethods, lockAsParent, onSave, 
                 <select
                   value={pmId}
                   onChange={e => setPmId(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 bg-white"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-primary-500 bg-white"
                 >
                   <option value="">— Sin especificar —</option>
                   {paymentMethods.map(m => (
@@ -370,6 +459,7 @@ export function Categorias() {
   const [categories, setCategories]       = useState([])
   const [paymentMethods, setPaymentMethods] = useState([])
   const [modal, setModal]                 = useState(null)
+  const [quickPay, setQuickPay]           = useState(null)
   const [loading, setLoading]             = useState(true)
 
   const load = async () => {
@@ -380,7 +470,7 @@ export function Categorias() {
       return
     }
     const [catRes, pmRes] = await Promise.all([
-      supabase.from('categories').select('*').eq('user_id', user.id)
+      supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id)
         .order('type').order('parent_id', { nullsFirst: true }).order('name'),
       supabase.from('payment_methods').select('id, name').eq('user_id', user.id).order('name'),
     ])
@@ -409,7 +499,7 @@ export function Categorias() {
     }
 
     if (modal?.id) {
-      await supabase.from('categories').update(values).eq('id', modal.id)
+      await supabase.from('categories').update(values).eq('id', modal.id).eq('user_id', user.id)
       if (recurringData) {
         await supabase.from('recurring_expenses').insert({ ...recurringData, category_id: modal.id, user_id: user.id })
       }
@@ -417,7 +507,7 @@ export function Categorias() {
       const { data: newCat, error } = await supabase
         .from('categories')
         .insert({ ...values, user_id: user.id })
-        .select()
+        .select('id, name, type, icon, parent_id')
         .single()
       if (error) { alert(`Error: ${error.message}`); return }
       if (recurringData && newCat) {
@@ -436,7 +526,7 @@ export function Categorias() {
       setCategories(prev => prev.filter(c => c.id !== id))
       return
     }
-    await supabase.from('categories').delete().eq('id', id)
+    await supabase.from('categories').delete().eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -450,9 +540,22 @@ export function Categorias() {
       setCategories([...demoCategories])
       return
     }
-    const { data } = await supabase.from('categories').select('*').eq('user_id', user.id)
+    const { data } = await supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id)
       .order('type').order('parent_id', { nullsFirst: true }).order('name')
     setCategories(data ?? [])
+  }
+
+  const handleQuickPay = async ({ category_id, amount, date, notes }) => {
+    if (isDemo(user)) { setQuickPay(null); return }
+    await supabase.from('transactions').insert({
+      user_id: user.id,
+      type: 'expense',
+      category_id,
+      amount,
+      date,
+      notes: notes || null,
+    })
+    setQuickPay(null)
   }
 
   const isEditingParent = modal?.id && !modal?.parent_id
@@ -480,6 +583,15 @@ export function Categorias() {
                   )}
                 </div>
                 <div className="flex gap-1">
+                  {cat.type === 'expense' && (
+                    <button
+                      onClick={() => setQuickPay(cat)}
+                      className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-300 hover:text-emerald-500 transition"
+                      title="Registrar pago"
+                    >
+                      <IconCash size={14} />
+                    </button>
+                  )}
                   <button onClick={() => setModal(cat)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
                     <IconPencil size={14} />
                   </button>
@@ -576,6 +688,14 @@ export function Categorias() {
           </>
         )}
       </Modal>
+
+      {quickPay && (
+        <QuickPayModal
+          category={quickPay}
+          onSave={handleQuickPay}
+          onClose={() => setQuickPay(null)}
+        />
+      )}
     </div>
   )
 }

@@ -10,7 +10,8 @@ import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from
 import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react'
 import { es } from 'date-fns/locale'
 
-const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
+const COLORS       = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
+const COLOR_CLASSES = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-400', 'bg-red-500', 'bg-violet-500', 'bg-cyan-500', 'bg-pink-500', 'bg-lime-500']
 
 function fmt(n) {
   return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(n)
@@ -38,12 +39,11 @@ function PieSection({ data }) {
               outerRadius={props.outerRadius + 10}
               startAngle={props.startAngle} endAngle={props.endAngle}
               fill={props.fill}
-              style={{ filter: `drop-shadow(0px 4px 12px ${props.fill}aa)` }}
             />
           )}
           onMouseEnter={(_, i) => setActiveIdx(i)}
           onMouseLeave={() => setActiveIdx(null)}
-          style={{ cursor: 'pointer', outline: 'none' }}
+          className="cursor-pointer outline-none"
         >
           {data.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
         </Pie>
@@ -58,7 +58,7 @@ function PieSection({ data }) {
             return (
               <div className="bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 min-w-[150px]">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: color }} />
+                  <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_CLASSES[idx % COLOR_CLASSES.length]}`} />
                   <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
                 </div>
                 <p className="text-lg font-bold text-gray-900">{fmt(item.value)}</p>
@@ -88,8 +88,8 @@ export function Reportes() {
       return
     }
     Promise.all([
-      supabase.from('transactions').select('*, categories(name, type, parent_id)').eq('user_id', user.id).order('date'),
-      supabase.from('categories').select('*').eq('user_id', user.id),
+      supabase.from('transactions').select('id, type, amount, date, category_id, transfer_group_id, categories(name, type, parent_id)').eq('user_id', user.id).order('date'),
+      supabase.from('categories').select('id, name, type, parent_id').eq('user_id', user.id),
     ]).then(([{ data: txs }, { data: cats }]) => {
       setTransactions(txs ?? [])
       setCategories(cats ?? [])
@@ -105,7 +105,7 @@ export function Reportes() {
   const monthlyData = months.map(month => {
     const from = format(startOfMonth(month), 'yyyy-MM-dd')
     const to = format(endOfMonth(month), 'yyyy-MM-dd')
-    const txs = transactions.filter(t => t.date >= from && t.date <= to)
+    const txs = transactions.filter(t => t.date >= from && t.date <= to && !t.transfer_group_id)
     const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
     const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
     return {
@@ -120,7 +120,7 @@ export function Reportes() {
     const from = format(startOfMonth(subMonths(new Date(), parseInt(period) - 1)), 'yyyy-MM-dd')
     const map = {}
     transactions
-      .filter(t => t.type === 'expense' && t.date >= from)
+      .filter(t => t.type === 'expense' && t.date >= from && !t.transfer_group_id)
       .forEach(t => {
         const cat = t.categories
         let label = cat?.name ?? 'Sin categoría'
@@ -140,7 +140,7 @@ export function Reportes() {
     const from = format(startOfMonth(subMonths(new Date(), parseInt(period) - 1)), 'yyyy-MM-dd')
     const map = {}
     transactions
-      .filter(t => t.type === 'income' && t.date >= from)
+      .filter(t => t.type === 'income' && t.date >= from && !t.transfer_group_id)
       .forEach(t => {
         const cat = t.categories
         let label = cat?.name ?? 'Sin categoría'
@@ -300,7 +300,7 @@ export function Reportes() {
             {expensesByCategory.map((cat, i) => (
               <div key={cat.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                  <div className={`w-2.5 h-2.5 rounded-full ${COLOR_CLASSES[i % COLOR_CLASSES.length]}`} />
                   <span className="text-gray-700">{cat.name}</span>
                 </div>
                 <span className="font-medium text-gray-900">{fmt(cat.value)}</span>
@@ -320,7 +320,7 @@ export function Reportes() {
             {incomeByCategory.map((cat, i) => (
               <div key={cat.name} className="flex items-center justify-between text-sm">
                 <div className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ background: COLORS[i % COLORS.length] }} />
+                  <div className={`w-2.5 h-2.5 rounded-full ${COLOR_CLASSES[i % COLOR_CLASSES.length]}`} />
                   <span className="text-gray-700">{cat.name}</span>
                 </div>
                 <span className="font-medium text-gray-900">{fmt(cat.value)}</span>

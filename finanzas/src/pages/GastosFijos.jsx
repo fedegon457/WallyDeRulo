@@ -54,7 +54,7 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
               onChange={e => setSearch(e.target.value)}
               placeholder="Buscar categoría..."
               autoFocus
-              className="w-full pl-9 pr-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2.5 text-base border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             />
           </div>
         </div>
@@ -98,7 +98,7 @@ function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }
 
 
 // ─── Formulario de configuración ──────────────────────────────────────────────
-function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }) {
+function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel, onCreateCategory, userId }) {
   const [name, setName]                   = useState(initial?.name ?? '')
   const [amount, setAmount]               = useState(initial?.amount ?? '')
   const [frequency, setFrequency]         = useState(initial?.frequency ?? 'monthly')
@@ -243,6 +243,9 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
               value={categoryId}
               onChange={setCategoryId}
               onClose={() => setCatOpen(false)}
+              onCreateCategory={onCreateCategory}
+              userId={userId}
+              type="expense"
             />
           )}
         </div>
@@ -265,7 +268,7 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel }
           onChange={e => setNotes(e.target.value)}
           placeholder="Descripción o detalle..."
           rows={2}
-          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
+          className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-base focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none resize-none"
         />
       </div>
 
@@ -345,11 +348,11 @@ export function GastosFijos() {
     }
     const [expRes, catRes, pmRes, payRes] = await Promise.all([
       supabase.from('recurring_expenses')
-        .select('*, categories(id, name, icon), payment_methods(id, name)')
+        .select('id, name, amount, frequency, day_of_month, category_id, payment_method_id, icon, notes, is_active, categories(id, name, icon), payment_methods(id, name)')
         .eq('user_id', user.id).eq('is_active', true).order('name'),
-      supabase.from('categories').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('payment_methods').select('*').eq('user_id', user.id).order('name'),
-      supabase.from('recurring_expense_payments').select('*')
+      supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id).order('name'),
+      supabase.from('payment_methods').select('id, name, type, icon, account_type').eq('user_id', user.id).order('name'),
+      supabase.from('recurring_expense_payments').select('id, recurring_expense_id, amount')
         .eq('user_id', user.id).eq('period', currentPeriod),
     ])
     setExpenses(expRes.data ?? [])
@@ -379,7 +382,7 @@ export function GastosFijos() {
       return
     }
     if (modal?.id) {
-      await supabase.from('recurring_expenses').update(values).eq('id', modal.id)
+      await supabase.from('recurring_expenses').update(values).eq('id', modal.id).eq('user_id', user.id)
     } else {
       await supabase.from('recurring_expenses').insert({ ...values, user_id: user.id })
     }
@@ -395,7 +398,7 @@ export function GastosFijos() {
       setExpenses([...demoRecurringExpenses])
       return
     }
-    await supabase.from('recurring_expenses').update({ is_active: false }).eq('id', id)
+    await supabase.from('recurring_expenses').update({ is_active: false }).eq('id', id).eq('user_id', user.id)
     load()
   }
 
@@ -421,6 +424,10 @@ export function GastosFijos() {
     })
     setPayModal(null)
     load()
+  }
+
+  const handleCreateCategory = (newCat) => {
+    setCategories(prev => [...prev, newCat])
   }
 
   const isPaid  = (id) => payments.some(p => p.recurring_expense_id === id)
@@ -557,6 +564,8 @@ export function GastosFijos() {
             paymentMethods={paymentMethods}
             onSave={save}
             onCancel={() => setModal(null)}
+            onCreateCategory={handleCreateCategory}
+            userId={user?.id}
           />
         )}
       </Modal>
