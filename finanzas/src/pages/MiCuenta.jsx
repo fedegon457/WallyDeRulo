@@ -92,13 +92,49 @@ export function MiCuenta() {
     try { await exportAllData(user.id) } finally { setExporting(false) }
   }
 
-  const handleClearHistory = async () => {
+  const handleClearData = async () => {
     if (confirmText !== 'BORRAR') return
     setWorking(true); setError('')
     try {
-      await supabase.rpc('clear_user_history')
+      const { data: ses } = await supabase.from('shared_expenses').select('id').eq('user_id', user.id)
+      if (ses?.length) {
+        const { data: parts } = await supabase.from('shared_expense_participants').select('id').in('shared_expense_id', ses.map(e => e.id))
+        if (parts?.length) await supabase.from('shared_expense_payments').delete().in('participant_id', parts.map(p => p.id))
+        await supabase.from('shared_expense_participants').delete().in('shared_expense_id', ses.map(e => e.id))
+      }
+      const { data: res } = await supabase.from('recurring_expenses').select('id').eq('user_id', user.id)
+      if (res?.length) await supabase.from('recurring_expense_payments').delete().in('recurring_expense_id', res.map(r => r.id))
+      await Promise.all([
+        supabase.from('shared_expenses').delete().eq('user_id', user.id),
+        supabase.from('recurring_expenses').delete().eq('user_id', user.id),
+        supabase.from('credit_card_statements').delete().eq('user_id', user.id),
+        supabase.from('transactions').delete().eq('user_id', user.id),
+        supabase.from('budgets').delete().eq('user_id', user.id),
+        supabase.from('savings_goals').delete().eq('user_id', user.id),
+        supabase.from('debts').delete().eq('user_id', user.id),
+      ])
       closeModal()
-      alert('Historial eliminado. Tus categorías y cuentas se mantienen.')
+      alert('Datos financieros eliminados. Tus cuentas y categorías se conservan.')
+    } catch {
+      setError('Ocurrió un error. Intentá de nuevo.')
+    } finally { setWorking(false) }
+  }
+
+  const handleClearConfig = async () => {
+    if (confirmText !== 'CONFIGURACION') return
+    setWorking(true); setError('')
+    try {
+      await Promise.all([
+        supabase.from('transactions').update({ payment_method_id: null, category_id: null }).eq('user_id', user.id),
+        supabase.from('budgets').update({ category_id: null }).eq('user_id', user.id),
+      ])
+      await supabase.from('credit_card_statements').delete().eq('user_id', user.id)
+      await Promise.all([
+        supabase.from('payment_methods').delete().eq('user_id', user.id),
+        supabase.from('categories').delete().eq('user_id', user.id),
+      ])
+      closeModal()
+      alert('Configuración eliminada. Tu historial financiero se conserva.')
     } catch {
       setError('Ocurrió un error. Intentá de nuevo.')
     } finally { setWorking(false) }
@@ -265,21 +301,35 @@ export function MiCuenta() {
               Estas acciones son irreversibles. Exportá tus datos antes de continuar.
             </p>
 
-            {/* Opción 1: Solo historial */}
+            {/* Opción 1: Datos financieros */}
             <button
-              onClick={() => setModal('history')}
+              onClick={() => setModal('data')}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-amber-200 hover:bg-amber-50 transition text-left"
             >
               <div className="w-8 h-8 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
                 <IconEraser size={16} className="text-amber-500" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-amber-700">Borrar historial</p>
-                <p className="text-xs text-gray-400">Elimina transacciones, presupuestos, metas y deudas. Conserva categorías y cuentas.</p>
+                <p className="text-sm font-semibold text-amber-700">Borrar datos financieros</p>
+                <p className="text-xs text-gray-400">Elimina transacciones, gastos fijos, presupuestos, metas y deudas. Conserva cuentas y categorías.</p>
               </div>
             </button>
 
-            {/* Opción 2: Eliminar cuenta */}
+            {/* Opción 2: Configuración */}
+            <button
+              onClick={() => setModal('config')}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-orange-200 hover:bg-orange-50 transition text-left"
+            >
+              <div className="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                <IconTrash size={16} className="text-orange-500" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-orange-700">Borrar configuración</p>
+                <p className="text-xs text-gray-400">Elimina cuentas y categorías. El historial queda pero sin asociar.</p>
+              </div>
+            </button>
+
+            {/* Opción 3: Eliminar cuenta */}
             <button
               onClick={() => setModal('account')}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 border-red-200 hover:bg-red-50 transition text-left"
@@ -296,8 +346,8 @@ export function MiCuenta() {
         </div>
       )}
 
-      {/* Modal: Borrar historial */}
-      {modal === 'history' && (
+      {/* Modal: Borrar datos financieros */}
+      {modal === 'data' && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
           <div className="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 space-y-5">
@@ -307,8 +357,8 @@ export function MiCuenta() {
                   <IconEraser size={20} className="text-amber-600" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-900">Borrar historial</h2>
-                  <p className="text-xs text-amber-500">Tus categorías y cuentas se conservan</p>
+                  <h2 className="font-bold text-gray-900">Borrar datos financieros</h2>
+                  <p className="text-xs text-amber-500">Tus cuentas y categorías se conservan</p>
                 </div>
               </div>
               <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
@@ -320,11 +370,11 @@ export function MiCuenta() {
               <p className="font-semibold">Se eliminará permanentemente:</p>
               <ul className="list-disc ml-4 space-y-0.5 text-amber-600">
                 <li>Todas tus transacciones</li>
-                <li>Gastos fijos y presupuestos</li>
-                <li>Metas de ahorro y deudas</li>
-                <li>Gastos compartidos</li>
+                <li>Gastos fijos y resúmenes de tarjeta</li>
+                <li>Presupuestos y metas de ahorro</li>
+                <li>Deudas y gastos compartidos</li>
               </ul>
-              <p className="font-semibold text-green-600 mt-2">Se conservará: categorías, cuentas y tu acceso a la app.</p>
+              <p className="font-semibold text-green-600 mt-2">Se conservará: cuentas, categorías y tu acceso.</p>
             </div>
 
             <div>
@@ -348,10 +398,71 @@ export function MiCuenta() {
                 className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
                 Cancelar
               </button>
-              <button type="button" onClick={handleClearHistory}
+              <button type="button" onClick={handleClearData}
                 disabled={confirmText !== 'BORRAR' || working}
                 className="flex-1 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-semibold hover:bg-amber-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
-                {working ? 'Borrando...' : 'Borrar historial'}
+                {working ? 'Borrando...' : 'Borrar datos'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Borrar configuración */}
+      {modal === 'config' && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={closeModal} />
+          <div className="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl p-6 space-y-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <IconTrash size={20} className="text-orange-600" />
+                </div>
+                <div>
+                  <h2 className="font-bold text-gray-900">Borrar configuración</h2>
+                  <p className="text-xs text-orange-500">Cuentas y categorías</p>
+                </div>
+              </div>
+              <button onClick={closeModal} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400">
+                <IconX size={18} />
+              </button>
+            </div>
+
+            <div className="bg-orange-50 rounded-xl p-4 text-sm text-orange-700 space-y-1">
+              <p className="font-semibold">Se eliminará permanentemente:</p>
+              <ul className="list-disc ml-4 space-y-0.5 text-orange-600">
+                <li>Todas tus cuentas y tarjetas</li>
+                <li>Todas tus categorías</li>
+                <li>Resúmenes de tarjeta</li>
+              </ul>
+              <p className="font-semibold text-green-600 mt-2">Se conservará: historial de transacciones y tu acceso.</p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Escribí <span className="font-mono font-bold text-orange-600">CONFIGURACION</span> para confirmar
+              </label>
+              <input
+                type="text"
+                value={confirmText}
+                onChange={e => setConfirmText(e.target.value)}
+                placeholder="CONFIGURACION"
+                autoFocus
+                className="w-full border-2 border-gray-200 rounded-xl px-4 py-2.5 text-base font-mono focus:ring-2 focus:ring-orange-200 focus:border-orange-400 outline-none"
+              />
+            </div>
+
+            {error && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
+
+            <div className="flex gap-2">
+              <button type="button" onClick={closeModal}
+                className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-medium text-gray-600 hover:bg-gray-50 transition">
+                Cancelar
+              </button>
+              <button type="button" onClick={handleClearConfig}
+                disabled={confirmText !== 'CONFIGURACION' || working}
+                className="flex-1 py-2.5 rounded-xl bg-orange-500 text-white text-sm font-semibold hover:bg-orange-600 disabled:opacity-40 disabled:cursor-not-allowed transition">
+                {working ? 'Borrando...' : 'Borrar configuración'}
               </button>
             </div>
           </div>
