@@ -30,14 +30,12 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
-          echo "DEBUG: VITE_SUPABASE_URL length = ${#VITE_SUPABASE_URL}"
-          echo "DEBUG: VITE_SUPABASE_ANON_KEY length = ${#VITE_SUPABASE_ANON_KEY}"
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
             echo "❌ Supabase secrets missing – configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in GitHub Secrets"
             exit 1
           fi
+          printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
           npm run build
-          echo "DEBUG: bundle generado = $(ls dist/assets/index-*.js)"
 
       - name: Deploy to server
         working-directory: finanzas
