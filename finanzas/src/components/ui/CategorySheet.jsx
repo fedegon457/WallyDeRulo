@@ -26,8 +26,11 @@ export function CategorySheet({ categories, value, onChange, onClose, onCreateCa
     if (children.length === 0) {
       onChange(cat.id)
       onClose()
+    } else if (expandedId === cat.id) {
+      onChange(cat.id)
+      onClose()
     } else {
-      setExpandedId(expandedId === cat.id ? null : cat.id)
+      setExpandedId(cat.id)
     }
   }
 
