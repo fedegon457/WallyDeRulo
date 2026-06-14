@@ -35,6 +35,8 @@ jobs:
             exit 1
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
+          echo "DEBUG .env lines=$(wc -l < .env) chars=$(wc -c < .env)"
+          echo "DEBUG .env first key=$(head -1 .env | cut -d= -f1)"
           npm run build
 
       - name: Deploy to server
