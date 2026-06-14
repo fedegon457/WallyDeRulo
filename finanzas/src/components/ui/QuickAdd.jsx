@@ -215,7 +215,7 @@ export function QuickAddModal({ open, onClose }) {
                   <>
                     <FormRow label="Categoria" onClick={() => setCatOpen(true)}>
                       {selectedCat ? (
-                        <span className="text-sm text-gray-900">{selectedCat.icon} {selectedParent ? `${selectedParent.name} > ` : ''}{selectedCat.name}</span>
+                        <span className="flex items-center gap-1.5 text-sm text-gray-900">{selectedCat.icon && <IconDisplay icon={selectedCat.icon} size={15} />}{selectedParent ? `${selectedParent.name} > ` : ''}{selectedCat.name}</span>
                       ) : <span className="text-sm text-gray-300">Sin categoria</span>}
                       <IconChevronRight size={14} className="ml-auto text-gray-300 flex-shrink-0" />
                     </FormRow>
