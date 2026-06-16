@@ -12,7 +12,8 @@ import { Button } from '../components/ui/Button'
 import { Input, Select, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
 import { AR_BANKS, CARD_NETWORKS, CARD_COLORS, CARD_COLOR_CLASSES } from '../lib/creditCard'
-import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
+import { IconDisplay } from '../components/ui/EmojiPicker'
+import { IconPicker } from '../components/ui/IconPicker'
 import { fmt as fmtARS } from '../lib/fmt'
 
 // Main account types — debit_card excluded (created via bank account)
@@ -120,7 +121,7 @@ function DebitCardForm({ parentAccount, initial, onSave, onCancel }) {
         </div>
       </div>
 
-      <EmojiPicker value={icon} onChange={setIcon} label="Icono (opcional)" />
+      <IconPicker value={icon} onChange={setIcon} label="Icono (opcional)" />
 
       <Input
         label="Nombre de la tarjeta"
@@ -327,7 +328,7 @@ function AccountForm({ initial, onSave, onCancel }) {
         </div>
       )}
 
-      <EmojiPicker value={icon} onChange={setIcon} label="Icono de la cuenta (opcional)" />
+      <IconPicker value={icon} onChange={setIcon} label="Icono de la cuenta (opcional)" />
 
       <Input
         label="Nombre de la cuenta"
@@ -377,6 +378,7 @@ export function Cuentas() {
   const [modal, setModal] = useState(null)
   const [debitModal, setDebitModal] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [balancesHidden, setBalancesHidden] = useState(false)
 
   const load = async () => {
     if (isDemo(user)) {
@@ -510,25 +512,34 @@ export function Cuentas() {
           <h1 className="text-2xl font-bold text-gray-900">Cuentas</h1>
           <p className="text-gray-500 text-sm">Tu patrimonio en un vistazo</p>
         </div>
-        <Button onClick={() => setModal({})} size="md">
-          <IconPlus size={16} /> Nueva cuenta
-        </Button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setBalancesHidden(h => !h)}
+            className="p-2 rounded-xl border border-gray-200 hover:bg-gray-50 text-gray-400 hover:text-gray-600 transition"
+            title={balancesHidden ? 'Mostrar saldos' : 'Ocultar saldos'}
+          >
+            {balancesHidden ? <IconEye size={16} /> : <IconEyeOff size={16} />}
+          </button>
+          <Button onClick={() => setModal({})} size="md">
+            <IconPlus size={16} /> Nueva cuenta
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
           <p className="text-xs text-gray-400 mb-1">Capital total</p>
-          <p className={`font-bold text-lg ${totalCapital >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{fmtARS(totalCapital)}</p>
+          <p className={`font-bold text-lg ${totalCapital >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(totalCapital)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">solo ARS</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
           <p className="text-xs text-gray-400 mb-1">Lo que debo</p>
-          <p className="font-bold text-lg text-orange-500">{fmtARS(totalDebt)}</p>
+          <p className="font-bold text-lg text-orange-500">{balancesHidden ? '••••••' : fmtARS(totalDebt)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">solo ARS</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
           <p className="text-xs text-gray-400 mb-1">Balance neto</p>
-          <p className={`font-bold text-lg ${netBalance >= 0 ? 'text-primary-600' : 'text-red-500'}`}>{fmtARS(netBalance)}</p>
+          <p className={`font-bold text-lg ${netBalance >= 0 ? 'text-primary-600' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(netBalance)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">capital menos deudas</p>
         </div>
       </div>
@@ -589,7 +600,7 @@ export function Cuentas() {
                         <div className="mt-3 pt-3 border-t border-gray-50 flex justify-between items-baseline">
                           <span className="text-xs text-gray-400">{info.isDebt ? 'Deuda actual' : 'Saldo actual'}</span>
                           <span className={`font-bold text-base ${info.isDebt ? 'text-orange-500' : balance >= 0 ? 'text-gray-900' : 'text-red-500'}`}>
-                            {info.isDebt ? '-' : ''}{fmtCurrency(Math.abs(balance), currency)}
+                            {balancesHidden ? '••••••' : `${info.isDebt ? '-' : ''}${fmtCurrency(Math.abs(balance), currency)}`}
                           </span>
                         </div>
 

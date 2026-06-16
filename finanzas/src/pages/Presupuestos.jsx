@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState, useMemo } from 'react'
-import { IconPlus, IconPencil, IconTrash, IconTarget } from '@tabler/icons-react'
+import { IconPlus, IconPencil, IconTrash, IconTarget, IconChevronDown, IconChevronUp } from '@tabler/icons-react'
+import { CHART_COLORS } from '../lib/chartColors'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
 import {
@@ -13,6 +14,40 @@ import { IconDisplay } from '../components/ui/EmojiPicker'
 import { format, startOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { fmt } from '../lib/fmt'
+
+function statusColor(ratio) {
+  if (ratio >= 1)   return '#ef4444'
+  if (ratio >= 0.8) return '#f59e0b'
+  return '#10b981'
+}
+
+function RingProgress({ ratio, color, size = 56, strokeWidth = 6 }) {
+  const stroke = color ?? statusColor(ratio)
+  const r = (size - strokeWidth) / 2
+  const circ = 2 * Math.PI * r
+  const offset = circ * (1 - Math.min(ratio, 1))
+  const pct = Math.round(ratio * 100)
+  return (
+    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
+      {/* GGA exception: size, SVG transition and ratio-derived color are runtime-computed */}
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke}
+          strokeWidth={strokeWidth} strokeLinecap="round"
+          strokeDasharray={circ} strokeDashoffset={offset}
+          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+        />
+      </svg>
+      <span
+        className="absolute inset-0 flex items-center justify-center text-xs font-bold"
+        style={{ color: ratio >= 1 ? '#ef4444' : ratio >= 0.8 ? '#d97706' : '#374151' }}
+      >
+        {pct}%
+      </span>
+    </div>
+  )
+}
 
 function ratioColor(ratio) {
   if (ratio >= 1)   return { bar: 'bg-red-500',     text: 'text-red-600',     light: 'bg-red-50',   border: 'border-red-200' }
@@ -224,6 +259,14 @@ export function Presupuestos() {
 
   const generalBudget   = budgets.find(b => !b.category_id)
   const categoryBudgets = budgets.filter(b => b.category_id)
+  const totalCategoryBudget = categoryBudgets.reduce((s, b) => s + b.amount, 0)
+
+  const [expandedBudgets, setExpandedBudgets] = useState(new Set())
+  const toggleExpand = (id) => setExpandedBudgets(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
 
   // Categorías con gasto este mes pero sin presupuesto asignado
   const budgetedCatIds = new Set(categoryBudgets.map(b => b.category_id))
@@ -268,16 +311,19 @@ export function Presupuestos() {
         const { text, light, border } = ratioColor(ratio)
         return (
           <div className={`rounded-2xl border-2 ${border} ${light} p-5`}>
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <IconTarget size={15} className={text} />
+            <div className="flex items-center gap-4 mb-4">
+              <RingProgress ratio={ratio} size={72} strokeWidth={7}
+                color={ratio >= 1 ? '#ef4444' : ratio >= 0.8 ? '#f59e0b' : '#4ab8b8'}
+              />
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <IconTarget size={14} className={text} />
                   <span className={`text-xs font-semibold uppercase tracking-wide ${text}`}>Presupuesto general</span>
                 </div>
-                <p className="text-3xl font-bold text-gray-900">{fmt(spent)}</p>
-                <p className="text-sm text-gray-500 mt-0.5">de {fmt(generalBudget.amount)} este mes</p>
+                <p className="text-2xl font-bold text-gray-900">{fmt(spent)}</p>
+                <p className="text-sm text-gray-500">de {fmt(generalBudget.amount)} este mes</p>
               </div>
-              <div className="flex gap-1">
+              <div className="flex flex-col gap-1 flex-shrink-0">
                 <button onClick={() => setModal(generalBudget)}
                   className="p-1.5 rounded-lg hover:bg-white/70 text-gray-400 hover:text-primary-600 transition">
                   <IconPencil size={14} />
@@ -309,46 +355,116 @@ export function Presupuestos() {
         </button>
       )}
 
-      {/* Por categoría */}
+      {/* Distribución & Impacto */}
       {categoryBudgets.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Por categoría</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Distribución &amp; Impacto</h2>
+
+          {/* Stacked allocation bar */}
+          {totalCategoryBudget > 0 && (
+            <div className="mb-3 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+              <p className="text-xs font-medium text-gray-500 mb-2">Distribución del presupuesto</p>
+              <div className="h-3 rounded-full overflow-hidden flex">
+                {categoryBudgets.map((b, i) => (
+                  <div
+                    key={b.id}
+                    style={/* GGA exception: dynamic percentage width and chart palette color */ { width: `${b.amount / totalCategoryBudget * 100}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                    className="h-full"
+                  />
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2.5">
+                {categoryBudgets.map((b, i) => {
+                  const cat = categories.find(c => c.id === b.category_id)
+                  if (!cat) return null
+                  return (
+                    <div key={b.id} className="flex items-center gap-1.5">
+                      {/* GGA exception: identity dot color from chart palette */}
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <span className="text-xs text-gray-600">{cat.name} <span className="font-semibold">{Math.round(b.amount / totalCategoryBudget * 100)}%</span></span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
-              {categoryBudgets.map(b => {
+              {categoryBudgets.map((b, i) => {
                 const cat = categories.find(c => c.id === b.category_id)
                 if (!cat) return null
                 const spent = getSpent(b)
-                const ratio = b.amount > 0 ? spent / b.amount : 0
-                const { text } = ratioColor(ratio)
+                const consumedRatio = b.amount > 0 ? spent / b.amount : 0
+                const allocationPct = totalCategoryBudget > 0 ? b.amount / totalCategoryBudget * 100 : 0
+                const { text } = ratioColor(consumedRatio)
+                const color = CHART_COLORS[i % CHART_COLORS.length]
+                const subCats = categories.filter(c => c.parent_id === b.category_id)
+                const isExpanded = expandedBudgets.has(b.id)
                 return (
-                  <div key={b.id} className="px-4 py-3.5">
-                    <div className="flex items-center justify-between mb-2.5">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          {cat.icon
-                            ? <IconDisplay icon={cat.icon} size={18} />
-                            : <span className="text-sm">📋</span>
-                          }
+                  <div key={b.id}>
+                    <div className="px-4 py-3.5">
+                      <div className="flex items-center gap-3">
+                        <RingProgress ratio={consumedRatio} size={52} strokeWidth={5} />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            {/* GGA exception: identity dot color from dynamic chart palette */}
+                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                            <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
+                          </div>
+                          <p className="text-xs text-gray-400">{fmt(spent)} <span className="text-gray-300">de</span> {fmt(b.amount)}</p>
+                          {/* Allocation bar — shows how big this budget is relative to others */}
+                          <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
+                            {/* GGA exception: color and width from dynamic data */}
+                            <div className="h-full rounded-full" style={{ width: `${Math.min(allocationPct, 100)}%`, backgroundColor: color, opacity: 0.5 }} />
+                          </div>
+                          <span className="text-xs text-gray-400">{Math.round(allocationPct)}% del total presupuestado</span>
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">{cat.name}</p>
-                          <p className="text-xs text-gray-400">{fmt(spent)} de {fmt(b.amount)}</p>
+                        <div className="flex items-center gap-0.5 flex-shrink-0">
+                          {subCats.length > 0 && (
+                            <button onClick={() => toggleExpand(b.id)}
+                              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition">
+                              {isExpanded ? <IconChevronUp size={13} /> : <IconChevronDown size={13} />}
+                            </button>
+                          )}
+                          <button onClick={() => setModal(b)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
+                            <IconPencil size={13} />
+                          </button>
+                          <button onClick={() => remove(b.id)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
+                            <IconTrash size={13} />
+                          </button>
                         </div>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className={`text-sm font-bold ${text}`}>{Math.round(ratio * 100)}%</span>
-                        <button onClick={() => setModal(b)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
-                          <IconPencil size={13} />
-                        </button>
-                        <button onClick={() => remove(b.id)}
-                          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
-                          <IconTrash size={13} />
-                        </button>
                       </div>
                     </div>
-                    <ProgressBar spent={spent} limit={b.amount} />
+                    {/* Subcategory breakdown */}
+                    {isExpanded && subCats.length > 0 && (
+                      <div className="bg-gray-50 px-4 py-3 space-y-2.5 border-t border-gray-100">
+                        {subCats.map(sub => {
+                          const subSpent = spentByCategory[sub.id] || 0
+                          const subRatio = b.amount > 0 ? subSpent / b.amount : 0
+                          return (
+                            <div key={sub.id}>
+                              <div className="flex items-center justify-between mb-1">
+                                <div className="flex items-center gap-1.5">
+                                  {sub.icon && <IconDisplay icon={sub.icon} size={12} />}
+                                  <span className="text-xs text-gray-600">{sub.name}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">{fmt(subSpent)}</span>
+                              </div>
+                              <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
+                                {/* GGA exception: dynamic percentage width and category color from data */}
+                                <div
+                                  className="h-full rounded-full opacity-60"
+                                  style={{ width: `${Math.min(subRatio * 100, 100)}%`, backgroundColor: color }}
+                                />
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )
               })}

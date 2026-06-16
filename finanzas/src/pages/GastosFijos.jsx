@@ -1,6 +1,6 @@
 ﻿import { useEffect, useState } from 'react'
 import {
-  IconPlus, IconPencil, IconTrash, IconCheck, IconRefresh, IconX, IconSearch, IconChevronDown
+  IconPlus, IconPencil, IconTrash, IconRefresh, IconX, IconSearch, IconChevronDown
 } from '@tabler/icons-react'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
@@ -10,7 +10,8 @@ import {
 import { Button } from '../components/ui/Button'
 import { Input, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
-import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
+import { IconDisplay } from '../components/ui/EmojiPicker'
+import { IconPicker } from '../components/ui/IconPicker'
 import { CustomSelect, buildPmGroups, ACCOUNT_TYPE_LABELS } from '../components/ui/CustomSelect'
 import { CategorySheet } from '../components/ui/CategorySheet'
 import { format } from 'date-fns'
@@ -18,6 +19,38 @@ import { es } from 'date-fns/locale'
 import { fmt } from '../lib/fmt'
 
 const FREQ_LABELS = { monthly: 'Mensual', yearly: 'Anual', weekly: 'Semanal' }
+
+function getDaysUntil(dayOfMonth) {
+  if (!dayOfMonth) return null
+  const now = new Date()
+  const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const thisMonth = new Date(now.getFullYear(), now.getMonth(), dayOfMonth)
+  const next = thisMonth >= todayMidnight ? thisMonth : new Date(now.getFullYear(), now.getMonth() + 1, dayOfMonth)
+  return Math.round((next - todayMidnight) / (1000 * 60 * 60 * 24))
+}
+
+function DateBadge({ dayOfMonth, frequency, isDone }) {
+  if (!dayOfMonth || frequency !== 'monthly') {
+    return <span className="text-xs text-gray-400">{FREQ_LABELS[frequency]}</span>
+  }
+  const days = isDone ? null : getDaysUntil(dayOfMonth)
+
+  let countdown = null
+  if (!isDone && days !== null) {
+    if (days === 0)      countdown = <span className="text-[11px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded-md">¡Hoy!</span>
+    else if (days === 1) countdown = <span className="text-[11px] font-semibold text-red-500 bg-red-50 px-1.5 py-0.5 rounded-md">mañana</span>
+    else if (days <= 3)  countdown = <span className="text-[11px] font-semibold text-red-400 bg-red-50 px-1.5 py-0.5 rounded-md">{days} días</span>
+    else if (days <= 7)  countdown = <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded-md">{days} días</span>
+    else                 countdown = <span className="text-[11px] text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-md">{days} días</span>
+  }
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-md">día {dayOfMonth}</span>
+      {countdown}
+    </div>
+  )
+}
 
 // ─── Picker de categorías ─────────────────────────────────────────────────────
 function CategoryPickerModal({ categories, existingExpenses, onSelect, onClose }) {
@@ -149,7 +182,7 @@ function RecurringForm({ initial, categories, paymentMethods, onSave, onCancel, 
 
       {/* Ícono + Nombre */}
       <div className="flex gap-3 items-end">
-        <EmojiPicker value={icon} onChange={setIcon} label="Ícono" compact />
+        <IconPicker value={icon} onChange={setIcon} label="Ícono" compact />
         <div className="flex-1">
           <Input
             label="Nombre"
@@ -434,6 +467,7 @@ export function GastosFijos() {
   const totalMonthly = expenses.filter(e => e.frequency === 'monthly').reduce((s, e) => s + e.amount, 0)
   const totalPaid    = expenses.reduce((s, e) => s + getPaid(e.id), 0)
   const totalPending = expenses.filter(e => !isPaid(e.id)).reduce((s, e) => s + e.amount, 0)
+  const totalDone    = expenses.filter(e => isPaid(e.id)).length
 
   const mes = format(new Date(), 'MMMM yyyy', { locale: es })
 
@@ -457,20 +491,6 @@ export function GastosFijos() {
         </Button>
       </div>
 
-      {/* Resumen */}
-      <div className="grid grid-cols-3 gap-3">
-        {[
-          { label: 'Total mensual', value: fmt(totalMonthly), color: 'text-gray-900' },
-          { label: 'Pagado',        value: fmt(totalPaid),    color: 'text-emerald-600' },
-          { label: 'Pendiente',     value: fmt(totalPending), color: 'text-orange-500' },
-        ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-            <p className="text-xs text-gray-400">{s.label}</p>
-            <p className={`font-bold text-base ${s.color}`}>{s.value}</p>
-          </div>
-        ))}
-      </div>
-
       {expenses.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <IconRefresh size={40} className="mx-auto mb-3 opacity-30" />
@@ -479,65 +499,152 @@ export function GastosFijos() {
             Agregar uno
           </button>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="divide-y divide-gray-50">
-            {expenses.map(e => {
-              const paid       = isPaid(e.id)
-              const paidAmount = getPaid(e.id)
-              const cat = categories.find(c => c.id === e.category_id)
-              const pm  = paymentMethods.find(m => m.id === e.payment_method_id)
-              return (
-                <div key={e.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${paid ? 'bg-emerald-50' : 'bg-orange-50'}`}>
-                    {(e.icon || cat?.icon)
-                      ? <IconDisplay icon={e.icon || cat?.icon} size={24} />
-                      : <span className="text-xl">📋</span>
-                    }
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-gray-900 text-sm">{e.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {FREQ_LABELS[e.frequency]}
-                      {e.day_of_month ? ` · día ${e.day_of_month}` : ''}
-                      {cat ? ` · ${cat.name}` : ''}
-                      {pm  ? ` · ${pm.name}`  : ''}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <div className="text-right">
-                      <p className="text-sm font-bold text-gray-900">{fmt(e.amount)}</p>
-                      {paid && paidAmount !== e.amount && (
-                        <p className="text-xs text-emerald-600">Pagado {fmt(paidAmount)}</p>
-                      )}
-                    </div>
-                    {paid ? (
-                      <span className="flex items-center gap-1 text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg whitespace-nowrap">
-                        <IconCheck size={13} /> Pagado
-                      </span>
-                    ) : (
-                      <button onClick={() => setPayModal(e)}
-                        className="text-xs font-semibold text-white bg-primary-600 hover:bg-primary-700 px-2.5 py-1.5 rounded-lg transition whitespace-nowrap">
-                        Pagar
-                      </button>
-                    )}
-                    <div className="flex gap-1">
-                      <button onClick={() => setModal(e)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
-                        <IconPencil size={14} />
-                      </button>
-                      <button onClick={() => remove(e.id)}
-                        className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
-                        <IconTrash size={14} />
-                      </button>
-                    </div>
+      ) : (() => {
+        const pct       = Math.round(totalDone / expenses.length * 100)
+        const arcLen    = 131.9
+        const arcOffset = arcLen * (1 - totalDone / expenses.length)
+
+        const paidGroup  = expenses.filter(e => isPaid(e.id))
+        const todayGroup = expenses.filter(e => !isPaid(e.id) && e.frequency === 'monthly' && getDaysUntil(e.day_of_month) === 0)
+        const weekGroup  = expenses.filter(e => {
+          if (isPaid(e.id) || e.frequency !== 'monthly') return false
+          const d = getDaysUntil(e.day_of_month)
+          return d !== null && d > 0 && d <= 7
+        })
+        const laterGroup = expenses.filter(e => {
+          if (isPaid(e.id)) return false
+          if (e.frequency !== 'monthly') return true
+          const d = getDaysUntil(e.day_of_month)
+          return d === null || d > 7
+        })
+
+        const renderRow = (e, barColor, btnClass) => {
+          const cat  = categories.find(c => c.id === e.category_id)
+          const pm   = paymentMethods.find(m => m.id === e.payment_method_id)
+          const done = isPaid(e.id)
+          return (
+            <div key={e.id} className={`flex items-center overflow-hidden transition ${done ? 'opacity-50' : ''}`}>
+              <div className="w-1 self-stretch flex-shrink-0" style={/* GGA exception: urgency color from computed barColor */ { backgroundColor: barColor }} />
+              <div className={`flex items-center gap-3 flex-1 px-3.5 py-3.5 ${done ? '' : 'hover:bg-orange-50/30'}`}>
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${done ? 'bg-emerald-50' : 'bg-orange-50'}`}>
+                  {(e.icon || cat?.icon)
+                    ? <IconDisplay icon={e.icon || cat?.icon} size={24} />
+                    : <span className="text-xl">📋</span>
+                  }
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`font-semibold text-sm ${done ? 'line-through text-gray-400' : 'text-gray-900'}`}>{e.name}</p>
+                  <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+                    <DateBadge dayOfMonth={e.day_of_month} frequency={e.frequency} isDone={done} />
+                    {pm && <span className="text-xs text-gray-400">· {pm.name}</span>}
                   </div>
                 </div>
-              )
-            })}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <p className={`text-sm font-bold ${done ? 'text-gray-400' : 'text-gray-900'}`}>{fmt(e.amount)}</p>
+                  {done ? (
+                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg whitespace-nowrap">✓ Listo</span>
+                  ) : (
+                    <button
+                      onClick={() => setPayModal(e)}
+                      className={`text-xs font-bold active:scale-95 px-3 py-1.5 rounded-xl transition whitespace-nowrap ${btnClass}`}
+                    >
+                      Pagar
+                    </button>
+                  )}
+                  <div className="flex gap-0.5">
+                    <button onClick={() => setModal(e)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
+                      <IconPencil size={13} />
+                    </button>
+                    <button onClick={() => remove(e.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
+                      <IconTrash size={13} />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        return (
+          <div className="space-y-4">
+            {/* Arc hero */}
+            <div className="bg-white rounded-xl border border-primary-100 shadow-card p-4">
+              <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center flex-shrink-0 w-24">
+                  <div className="relative w-24 h-[52px]">
+                    <svg width="96" height="52" viewBox="0 0 96 52" className="overflow-visible block">
+                      <path d="M6,50 A42,42 0 0,1 90,50" fill="none" stroke="#f3f4f6" strokeWidth="8" strokeLinecap="round" />
+                      <path d="M6,50 A42,42 0 0,1 90,50" fill="none" stroke="#10b981" strokeWidth="8" strokeLinecap="round"
+                        strokeDasharray={arcLen} strokeDashoffset={arcOffset}
+                        style={/* GGA exception: SVG stroke-dashoffset transition has no Tailwind equivalent */ { transition: 'stroke-dashoffset .5s ease' }} />
+                    </svg>
+                  </div>
+                  <div className="flex flex-col items-center mt-1.5">
+                    <span className="text-base font-black text-gray-900 leading-none">{totalDone}/{expenses.length}</span>
+                    <span className="text-[9px] text-gray-400 mt-0.5">pagados</span>
+                  </div>
+                </div>
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-gray-400">Pagado este mes</span>
+                    <span className="text-sm font-bold text-emerald-600">{fmt(totalPaid)}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-gray-400">Aún pendiente</span>
+                    <span className="text-sm font-bold text-orange-500">{fmt(totalPending)}</span>
+                  </div>
+                  <div className="flex justify-between items-baseline">
+                    <span className="text-xs text-gray-400">Total mensual</span>
+                    <span className="text-sm font-bold text-gray-700">{fmt(totalMonthly)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-3.5">
+                <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                  <span>{totalDone} de {expenses.length} pagados</span>
+                  <span className="font-semibold text-emerald-600">{pct}%</span>
+                </div>
+                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={/* GGA exception: dynamic percentage width requires inline style */ { width: `${pct}%` }} />
+                </div>
+              </div>
+            </div>
+
+            {todayGroup.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-2">Hoy</p>
+                <div className="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden divide-y divide-red-50">
+                  {todayGroup.map(e => renderRow(e, '#ef4444', 'bg-red-500 hover:bg-red-600 text-white'))}
+                </div>
+              </div>
+            )}
+            {weekGroup.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide mb-2">Esta semana</p>
+                <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden divide-y divide-amber-50">
+                  {weekGroup.map(e => renderRow(e, '#f59e0b', 'bg-amber-500 hover:bg-amber-600 text-white'))}
+                </div>
+              </div>
+            )}
+            {laterGroup.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-2">Más adelante</p>
+                <div className="bg-white rounded-xl border border-primary-100 shadow-sm overflow-hidden divide-y divide-primary-50">
+                  {laterGroup.map(e => renderRow(e, '#bae8e8', 'bg-primary-600 hover:bg-primary-700 text-primary-800'))}
+                </div>
+              </div>
+            )}
+            {paidGroup.length > 0 && (
+              <div>
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">Pagados</p>
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                  {paidGroup.map(e => renderRow(e, '#10b981', ''))}
+                </div>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Picker de categorías */}
       {showPicker && (

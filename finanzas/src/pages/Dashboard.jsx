@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { IconTrendingUp, IconTrendingDown, IconWallet, IconArrowRight, IconArrowLeft, IconUsers, IconX } from '@tabler/icons-react'
+import { IconTrendingUp, IconTrendingDown, IconWallet, IconArrowRight, IconArrowLeft, IconUsers, IconX, IconChevronLeft, IconChevronRight } from '@tabler/icons-react'
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from 'recharts'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
@@ -9,6 +9,7 @@ import { format, startOfMonth, endOfMonth } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { WelcomeModal } from '../components/ui/WelcomeModal'
 import { OnboardingChecklist } from '../components/ui/OnboardingChecklist'
+import { MiniCalendar } from '../components/ui/MiniCalendar'
 import { IconDisplay } from '../components/ui/EmojiPicker'
 import { fmt } from '../lib/fmt'
 import { CHART_COLORS, CHART_COLOR_CLASSES } from '../lib/chartColors'
@@ -157,6 +158,7 @@ export function Dashboard() {
   const [hasBudget, setHasBudget] = useState(false)
   const [showWelcome, setShowWelcome] = useState(false)
   const [showChecklist, setShowChecklist] = useState(false)
+  const [currentDate, setCurrentDate] = useState(new Date())
 
   useEffect(() => {
     if (!user || isDemo(user)) return
@@ -186,19 +188,27 @@ export function Dashboard() {
     setShowChecklist(false)
   }
 
+  const changeMonth = (delta) => {
+    setCurrentDate(prev => {
+      const d = new Date(prev)
+      d.setMonth(d.getMonth() + delta)
+      return d
+    })
+  }
+
   useEffect(() => {
     if (!user) return
-    const now = new Date()
+    const now = currentDate
     const from = format(startOfMonth(now), 'yyyy-MM-dd')
     const to = format(endOfMonth(now), 'yyyy-MM-dd')
 
     if (isDemo(user)) {
       const txs = demoTransactions.filter(t => t.date >= from && t.date <= to)
       const rec = [...demoTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5)
-      const income = txs.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
-      const expense = txs.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+      const income = txs.filter(t => t.type === 'income' && !t.transfer_group_id).reduce((s, t) => s + t.amount, 0)
+      const expense = txs.filter(t => t.type === 'expense' && !t.transfer_group_id).reduce((s, t) => s + t.amount, 0)
       const catMap = {}
-      txs.filter(t => t.type === 'expense').forEach(t => {
+      txs.filter(t => t.type === 'expense' && !t.transfer_group_id).forEach(t => {
         const n = t.categories?.name ?? 'Sin categoria'
         catMap[n] = (catMap[n] ?? 0) + t.amount
       })
@@ -213,12 +223,12 @@ export function Dashboard() {
       return
     }
 
-    const currentPeriod = format(new Date(), 'yyyy-MM')
+    const currentPeriod = format(currentDate, 'yyyy-MM')
     Promise.all([
       supabase.from('transactions').select('type, amount, transfer_group_id, categories(name, icon)').eq('user_id', user.id).gte('date', from).lte('date', to),
       supabase.from('transactions').select('id, type, amount, date, notes, categories(name, type, icon)').eq('user_id', user.id).order('date', { ascending: false }).limit(5),
       supabase.from('shared_expenses').select('id, participants:shared_expense_participants(name, amount_owed, payments:shared_expense_payments(amount))').eq('user_id', user.id),
-      supabase.from('recurring_expenses').select('id, name, amount, icon').eq('user_id', user.id).eq('is_active', true).order('name'),
+      supabase.from('recurring_expenses').select('id, name, amount, icon, day_of_month, frequency').eq('user_id', user.id).eq('is_active', true).order('name'),
       supabase.from('recurring_expense_payments').select('recurring_expense_id').eq('user_id', user.id).eq('period', currentPeriod),
       supabase.from('payment_methods').select('id').eq('user_id', user.id).limit(1),
       supabase.from('budgets').select('id').eq('user_id', user.id).limit(1),
@@ -239,9 +249,9 @@ export function Dashboard() {
       setHasBudget((budgets?.length ?? 0) > 0)
       setLoading(false)
     })
-  }, [user])
+  }, [user, currentDate])
 
-  const mes = format(new Date(), 'MMMM yyyy', { locale: es })
+  const mes = format(currentDate, 'MMMM yyyy', { locale: es })
   const balance = data.income - data.expense
 
   const completedSteps = {
@@ -282,7 +292,21 @@ export function Dashboard() {
       <div className="bg-primary-500 rounded-2xl p-6 text-white border-2 border-primary-600">
         <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Balance del mes</p>
         <p className="text-4xl font-extrabold tracking-tight leading-none mb-2">{fmt(balance)}</p>
-        <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-900 border border-yellow-400 bg-accent capitalize">{mes}</span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => changeMonth(-1)}
+            className="w-6 h-6 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition active:scale-90"
+          >
+            <IconChevronLeft size={13} className="text-white" />
+          </button>
+          <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-900 border border-yellow-400 bg-accent capitalize">{mes}</span>
+          <button
+            onClick={() => changeMonth(1)}
+            className="w-6 h-6 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition active:scale-90"
+          >
+            <IconChevronRight size={13} className="text-white" />
+          </button>
+        </div>
         <div className="grid grid-cols-3 gap-2 mt-5">
           <div className="bg-white/15 rounded-xl p-3 border border-white/20">
             <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">Ingresos</p>
@@ -398,37 +422,71 @@ export function Dashboard() {
         </div>
       )}
 
-      {unpaidRecurring.length > 0 && (
-        <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Fijos pendientes</h2>
-              <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">{unpaidRecurring.length}</span>
-            </div>
-            <Link to="/gastos-fijos" className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
-              Ver todos <IconArrowRight size={13} />
-            </Link>
-          </div>
-          <div className="space-y-2">
-            {unpaidRecurring.slice(0, 4).map(e => (
-              <div key={e.id} className="flex items-center gap-3 py-1.5">
-                <div className="w-10 h-10 bg-red-50 rounded-2xl flex items-center justify-center flex-shrink-0">
-                  <IconDisplay icon={e.icon || 'IconClipboard'} size={20} className="text-red-400" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">{e.name}</p>
-                  {e.day_of_month && <p className="text-xs text-gray-400 font-medium">Vence dia {e.day_of_month}</p>}
-                </div>
-                <span className="text-sm font-bold text-red-500">{fmt(e.amount)}</span>
+      {recurringExpenses.length > 0 && (() => {
+        const calendarEntries = recurringExpenses
+          .filter(e => e.frequency === 'monthly' && e.day_of_month)
+          .map(e => ({ day: e.day_of_month, name: e.name, paid: recurringPayments.some(p => p.recurring_expense_id === e.id) }))
+        return (
+          <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Gastos Fijos</h2>
+                {unpaidRecurring.length > 0 && (
+                  <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">{unpaidRecurring.length} pend.</span>
+                )}
               </div>
-            ))}
+              <Link to="/gastos-fijos" className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
+                Ver todos <IconArrowRight size={13} />
+              </Link>
+            </div>
+            {calendarEntries.length > 0 && (
+              <div className="mb-4">
+                <MiniCalendar entries={calendarEntries} />
+              </div>
+            )}
+            {unpaidRecurring.length > 0 && (
+              <>
+                <p className="text-xs font-semibold text-orange-500 uppercase tracking-wide mb-2">Pendientes</p>
+                <div className="space-y-2">
+                  {unpaidRecurring.slice(0, 4).map(e => {
+                    const daysAway = e.day_of_month ? (() => {
+                      const today = new Date()
+                      const thisMonth = new Date(today.getFullYear(), today.getMonth(), e.day_of_month)
+                      const target = thisMonth >= today ? thisMonth : new Date(today.getFullYear(), today.getMonth() + 1, e.day_of_month)
+                      return Math.ceil((target - today) / (1000 * 60 * 60 * 24))
+                    })() : null
+                    return (
+                      <div key={e.id} className="flex items-center gap-3 py-1.5">
+                        <div className="w-10 h-10 bg-orange-50 rounded-2xl flex items-center justify-center flex-shrink-0">
+                          <IconDisplay icon={e.icon || 'IconClipboard'} size={20} className="text-orange-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{e.name}</p>
+                          {e.day_of_month && (
+                            <p className="text-xs text-gray-400">
+                              día {e.day_of_month}
+                              {daysAway !== null && (
+                                <span className={`font-semibold ml-1 ${daysAway === 0 ? 'text-red-600' : daysAway <= 3 ? 'text-red-400' : daysAway <= 7 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                  · {daysAway === 0 ? '¡Hoy!' : daysAway === 1 ? 'mañana' : `${daysAway}d`}
+                                </span>
+                              )}
+                            </p>
+                          )}
+                        </div>
+                        <span className="text-sm font-bold text-gray-700">{fmt(e.amount)}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                  <span className="text-sm text-gray-500 font-medium">Total pendiente</span>
+                  <span className="font-bold text-orange-500">{fmt(totalUnpaidRecurring)}</span>
+                </div>
+              </>
+            )}
           </div>
-          <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-            <span className="text-sm text-gray-500 font-medium">Total pendiente</span>
-            <span className="font-bold text-red-500">{fmt(totalUnpaidRecurring)}</span>
-          </div>
-        </div>
-      )}
+        )
+      })()}
 
       {selectedPerson && (
         <PersonDetailModal person={selectedPerson} sharedExpenses={sharedExpenses} onClose={() => setSelectedPerson(null)} />

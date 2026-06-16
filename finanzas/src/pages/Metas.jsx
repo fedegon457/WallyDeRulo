@@ -5,7 +5,7 @@ import { useAuth, isDemo } from '../contexts/AuthContext'
 import { Button } from '../components/ui/Button'
 import { AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
-import { format } from 'date-fns'
+import { format, differenceInMonths } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { fmt } from '../lib/fmt'
 
@@ -271,8 +271,13 @@ export function Metas() {
       )}
 
       {active.map(g => {
-        const ratio = g.target_amount > 0 ? g.current_amount / g.target_amount : 0
-        const pct   = Math.round(ratio * 100)
+        const ratio     = g.target_amount > 0 ? g.current_amount / g.target_amount : 0
+        const pct       = Math.round(ratio * 100)
+        const remaining = Math.max(g.target_amount - g.current_amount, 0)
+        const monthsLeft = g.deadline
+          ? Math.max(differenceInMonths(new Date(g.deadline), new Date()), 1)
+          : null
+        const monthlyNeeded = monthsLeft ? remaining / monthsLeft : null
         return (
           <div key={g.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-start justify-between mb-4">
@@ -307,21 +312,41 @@ export function Metas() {
               </div>
             </div>
 
-            <div className="bg-gray-100 rounded-full h-3 overflow-hidden mb-2">
-              {/* GGA exception: dynamic percentage width requires inline style */}
-              <div
-                className={`h-full rounded-full transition-all duration-500 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
-                style={{ width: `${Math.min(ratio * 100, 100)}%` }}
-              />
+            {/* Progress bar with milestone ticks */}
+            <div className="relative mb-2">
+              <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
+                {/* GGA exception: dynamic percentage width requires inline style */}
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
+                  style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                />
+              </div>
+              {[25, 50, 75].map(mark => (
+                <div
+                  key={mark}
+                  className={`absolute top-0 h-3 w-px ${pct >= mark ? 'bg-white/50' : 'bg-gray-300/70'}`}
+                  style={/* GGA exception: dynamic percentage position requires inline style */ { left: `${mark}%` }}
+                />
+              ))}
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">{fmt(g.current_amount)} ahorrado</span>
               <span className={`font-semibold ${META_TEXT_CLASSES[colorIdx(g.color)]}`}>{pct}%</span>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-              <span>Falta: {fmt(Math.max(g.target_amount - g.current_amount, 0))}</span>
+              <span>Falta: {fmt(remaining)}</span>
               <span>Objetivo: {fmt(g.target_amount)}</span>
             </div>
+
+            {/* Monthly calc */}
+            {monthlyNeeded !== null && (
+              <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+                <span className="text-xs text-gray-400">Para llegar a tiempo ({monthsLeft} {monthsLeft === 1 ? 'mes' : 'meses'})</span>
+                <span className={`text-sm font-bold ${META_TEXT_CLASSES[colorIdx(g.color)]}`}>
+                  {fmt(monthlyNeeded)}/mes
+                </span>
+              </div>
+            )}
           </div>
         )
       })}

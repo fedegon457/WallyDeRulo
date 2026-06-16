@@ -2,14 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@600;700;800;900&family=DM+Mono:wght@400;500&display=swap');
+
 * { box-sizing: border-box; }
+
+:root {
+  --ink:   #1a1a1a;
+  --gold:  #FFB500;
+  --teal:  #006866;
+  --paper: #FFFBF3;
+}
 
 body {
   margin: 0;
   font-family: 'Outfit', system-ui, -apple-system, sans-serif;
-  background-color: #F2FAFA;
+  background-color: #f0fafa;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Y2K chrome bars & bold borders */
+.border-ink  { border-color: var(--ink); }
+.text-ink    { color: var(--ink); }
+.bg-ink      { background-color: var(--ink); }
+.text-gold   { color: var(--gold); }
+.bg-gold     { background-color: var(--gold); }
+.font-mono   { font-family: 'DM Mono', monospace; }
+.font-display{ font-family: 'Space Grotesk', sans-serif; }
 
 #root { min-height: 100vh; }
 
@@ -72,8 +90,8 @@ html.dark .border-emerald-100 { border-color: rgba(167, 243, 208, 0.2); }
 html.dark .border-amber-200 { border-color: rgba(253, 230, 138, 0.3); }
 
 /* Semantic light tinted backgrounds */
-html.dark .bg-primary-50  { background-color: rgba(0, 196, 180, 0.12); }
-html.dark .bg-primary-100 { background-color: rgba(0, 196, 180, 0.2); }
+html.dark .bg-primary-50  { background-color: rgba(186, 232, 232, 0.10); }
+html.dark .bg-primary-100 { background-color: rgba(186, 232, 232, 0.18); }
 html.dark .bg-emerald-50  { background-color: rgba(34, 197, 94, 0.1); }
 html.dark .bg-emerald-100 { background-color: rgba(34, 197, 94, 0.15); }
 html.dark .bg-red-50      { background-color: rgba(239, 68, 68, 0.1); }

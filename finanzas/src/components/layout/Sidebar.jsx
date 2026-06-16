@@ -9,31 +9,31 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 
 const desktopNav = [
-  { to: '/',              icon: IconLayoutDashboard, label: 'Dashboard'          },
-  { to: '/transacciones', icon: IconArrowsUpDown,    label: 'Transacciones'      },
-  { to: '/categorias',    icon: IconTag,             label: 'Categorias'         },
-  { to: '/cuentas',       icon: IconWallet,          label: 'Cuentas'            },
-  { to: '/tarjetas',      icon: IconCreditCard,      label: 'Tarjetas'           },
-  { to: '/compartidos',   icon: IconUsers,           label: 'Gastos compartidos' },
-  { to: '/gastos-fijos',  icon: IconRefresh,         label: 'Gastos Fijos'       },
-  { to: '/presupuestos',  icon: IconTarget,          label: 'Presupuestos'       },
-  { to: '/metas',         icon: IconPigMoney,        label: 'Metas de ahorro'    },
-  { to: '/deudas',        icon: IconScale,        label: 'Deudas'             },
-  { to: '/proyeccion',    icon: IconTrendingUp,      label: 'Proyección'         },
-  { to: '/reportes',      icon: IconChartBar,        label: 'Reportes'           },
-  { to: '/calculadora',   icon: IconCalculator,      label: 'Calculadora'        },
+  { to: '/',              icon: IconLayoutDashboard, label: 'Dashboard',          color: '#4ab8b8' },
+  { to: '/transacciones', icon: IconArrowsUpDown,    label: 'Transacciones',      color: '#3b5bdb' },
+  { to: '/categorias',    icon: IconTag,             label: 'Categorias',         color: '#e67700' },
+  { to: '/cuentas',       icon: IconWallet,          label: 'Cuentas',            color: '#2f9e44' },
+  { to: '/tarjetas',      icon: IconCreditCard,      label: 'Tarjetas',           color: '#c92a2a' },
+  { to: '/compartidos',   icon: IconUsers,           label: 'Gastos compartidos', color: '#7b1fa2' },
+  { to: '/gastos-fijos',  icon: IconRefresh,         label: 'Gastos Fijos',       color: '#7c3aed' },
+  { to: '/presupuestos',  icon: IconTarget,          label: 'Presupuestos',       color: '#1864ab' },
+  { to: '/metas',         icon: IconPigMoney,        label: 'Metas de ahorro',    color: '#5c7cfa' },
+  { to: '/deudas',        icon: IconScale,           label: 'Deudas',             color: '#b45309' },
+  { to: '/proyeccion',    icon: IconTrendingUp,      label: 'Proyección',         color: '#0d9488' },
+  { to: '/reportes',      icon: IconChartBar,        label: 'Reportes',           color: '#be185d' },
+  { to: '/calculadora',   icon: IconCalculator,      label: 'Calculadora',        color: '#475569' },
 ]
 
 const mobileNav = [
-  { to: '/categorias',   icon: IconTag,          label: 'Categorias'         },
-  { to: '/compartidos',  icon: IconUsers,        label: 'Gastos compartidos' },
-  { to: '/gastos-fijos', icon: IconRefresh,      label: 'Gastos Fijos'       },
-  { to: '/presupuestos', icon: IconTarget,       label: 'Presupuestos'       },
-  { to: '/metas',        icon: IconPigMoney,     label: 'Metas de ahorro'    },
-  { to: '/deudas',       icon: IconScale,        label: 'Deudas'             },
-  { to: '/proyeccion',   icon: IconTrendingUp,   label: 'Proyección'         },
-  { to: '/calculadora',  icon: IconCalculator,   label: 'Calculadora'        },
-  { to: '/mi-cuenta',    icon: IconUserCircle,   label: 'Mi cuenta'          },
+  { to: '/categorias',   icon: IconTag,          label: 'Categorias',         color: '#e67700' },
+  { to: '/compartidos',  icon: IconUsers,        label: 'Gastos compartidos', color: '#7b1fa2' },
+  { to: '/gastos-fijos', icon: IconRefresh,      label: 'Gastos Fijos',       color: '#7c3aed' },
+  { to: '/presupuestos', icon: IconTarget,       label: 'Presupuestos',       color: '#1864ab' },
+  { to: '/metas',        icon: IconPigMoney,     label: 'Metas de ahorro',    color: '#5c7cfa' },
+  { to: '/deudas',       icon: IconScale,        label: 'Deudas',             color: '#b45309' },
+  { to: '/proyeccion',   icon: IconTrendingUp,   label: 'Proyección',         color: '#0d9488' },
+  { to: '/calculadora',  icon: IconCalculator,   label: 'Calculadora',        color: '#475569' },
+  { to: '/mi-cuenta',    icon: IconUserCircle,   label: 'Mi cuenta',          color: '#6b7280' },
 ]
 
 export function Sidebar({ open, onClose }) {
@@ -44,11 +44,11 @@ export function Sidebar({ open, onClose }) {
     <>
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex flex-col w-64 bg-primary-500 h-full flex-shrink-0">
-        <div className="flex items-center gap-3 px-5 py-5 border-b border-white/20">
-          <div className="w-9 h-9 bg-white/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-            <IconWallet size={18} className="text-white" stroke={2} />
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-primary-300">
+          <div className="w-9 h-9 bg-primary-200/60 rounded-2xl flex items-center justify-center flex-shrink-0">
+            <IconWallet size={18} className="text-primary-800" stroke={2} />
           </div>
-          <span className="font-extrabold text-white text-lg tracking-tight">MyWalli</span>
+          <span className="font-extrabold text-primary-800 text-lg tracking-tight">MyWalli</span>
         </div>
 
         <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
@@ -61,7 +61,7 @@ export function Sidebar({ open, onClose }) {
                 `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold transition-all ${
                   isActive
                     ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-white/75 hover:bg-white/15 hover:text-white'
+                    : 'text-primary-800 hover:bg-primary-400/30 hover:text-primary-900'
                 }`
               }
             >
@@ -70,7 +70,7 @@ export function Sidebar({ open, onClose }) {
                   <div
                     className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}
                   >
-                    <Icon size={16} className={isActive ? 'text-gray-900' : 'text-white/75'} stroke={2} />
+                    <Icon size={16} className={isActive ? 'text-gray-900' : 'text-primary-700'} stroke={2} />
                   </div>
                   <span className="flex-1">{label}</span>
                 </>
@@ -79,19 +79,19 @@ export function Sidebar({ open, onClose }) {
           ))}
         </nav>
 
-        <div className="px-3 py-4 border-t border-white/20 space-y-0.5">
+        <div className="px-3 py-4 border-t border-primary-300 space-y-0.5">
           <NavLink
             to="/mi-cuenta"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                isActive ? 'bg-white text-primary-600 shadow-sm' : 'text-white/60 hover:bg-white/15 hover:text-white'
+                isActive ? 'bg-white text-primary-600 shadow-sm' : 'text-primary-700 hover:bg-primary-400/30 hover:text-primary-900'
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}>
-                  <IconUserCircle size={16} className={isActive ? 'text-gray-900' : 'text-white/60'} stroke={2} />
+                  <IconUserCircle size={16} className={isActive ? 'text-gray-900' : 'text-primary-700'} stroke={2} />
                 </div>
                 <span className="flex-1">Mi cuenta</span>
               </>
@@ -99,16 +99,16 @@ export function Sidebar({ open, onClose }) {
           </NavLink>
           <button
             onClick={toggle}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold text-white/60 hover:bg-white/15 hover:text-white transition-all w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold text-primary-700 hover:bg-primary-400/30 hover:text-primary-900 transition-all w-full"
           >
-            <div className="w-7 h-7 rounded-xl flex items-center justify-center border border-white/20">
+            <div className="w-7 h-7 rounded-xl flex items-center justify-center border border-primary-300">
               {dark ? <IconSun size={15} stroke={2} /> : <IconMoon size={15} stroke={2} />}
             </div>
             {dark ? 'Modo claro' : 'Modo oscuro'}
           </button>
           <button
             onClick={signOut}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold text-white/60 hover:bg-red-500/25 hover:text-red-200 transition-all w-full"
+            className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold text-primary-700 hover:bg-red-500/20 hover:text-red-700 transition-all w-full"
           >
             <div className="w-7 h-7 rounded-xl flex items-center justify-center">
               <IconLogout size={16} stroke={2} />
@@ -127,7 +127,7 @@ export function Sidebar({ open, onClose }) {
             <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b-2 border-gray-100">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 bg-primary-500 rounded-2xl flex items-center justify-center">
-                  <IconWallet size={16} className="text-white" stroke={2} />
+                  <IconWallet size={16} className="text-primary-800" stroke={2} />
                 </div>
                 <span className="font-extrabold text-gray-900 tracking-tight text-lg">MyWalli</span>
               </div>
@@ -140,23 +140,25 @@ export function Sidebar({ open, onClose }) {
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 pt-1 pb-2">
                 Mas secciones
               </p>
-              {mobileNav.map(({ to, icon: Icon, label }) => (
+              {mobileNav.map(({ to, icon: Icon, label, color }) => (
                 <NavLink
                   key={to}
                   to={to}
                   onClick={onClose}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
-                      isActive ? 'bg-primary-50 text-primary-600' : 'text-gray-700 hover:bg-gray-50'
+                      isActive ? 'text-gray-900' : 'text-gray-700 hover:bg-gray-50'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
+                      {/* GGA exception: per-nav-item color from static array */}
                       <div
-                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all border flex-shrink-0 ${isActive ? 'bg-accent border-accent/80' : 'bg-gray-100 border-transparent'}`}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
+                        style={{ background: `${color}${isActive ? '22' : '15'}` }}
                       >
-                        <Icon size={16} className={isActive ? 'text-gray-900' : 'text-gray-500'} stroke={2} />
+                        <Icon size={16} stroke={isActive ? 2.5 : 2} style={{ color }} />
                       </div>
                       {label}
                     </>

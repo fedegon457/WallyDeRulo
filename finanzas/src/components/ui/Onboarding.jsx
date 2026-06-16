@@ -7,7 +7,7 @@ import {
 const SCREENS = [
   {
     Icon:  IconWallet,
-    color: '#00C4B4',
+    color: '#4ab8b8',
     title: 'Bienvenido a MyWalli',
     sub:   'Tus finanzas personales, ordenadas',
     desc:  'Registrá ingresos, gastos y transferencias en segundos. Todo tu dinero en un solo lugar.',
@@ -55,6 +55,7 @@ export function Onboarding({ onFinish }) {
 
       {/* Content */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
+        {/* GGA exception: icon bg/color from SCREENS data array */}
         <div
           className="w-28 h-28 rounded-3xl flex items-center justify-center mb-8 shadow-lg"
           style={{ backgroundColor: color + '18' }}
@@ -70,16 +71,13 @@ export function Onboarding({ onFinish }) {
       <div className="px-8 pb-10 space-y-5 max-w-sm mx-auto w-full">
         {/* Progress dots */}
         <div className="flex justify-center gap-2">
+          {/* GGA exception: active dot color from SCREENS data */}
           {SCREENS.map((_, i) => (
             <button
               key={i}
               onClick={() => setStep(i)}
-              className="rounded-full transition-all duration-300"
-              style={{
-                width:           i === step ? 24 : 8,
-                height:          8,
-                backgroundColor: i === step ? color : '#E5E7EB',
-              }}
+              className={`rounded-full transition-all duration-300 h-2 ${i === step ? 'w-6' : 'w-2'}`}
+              style={{ backgroundColor: i === step ? color : '#E5E7EB' }}
             />
           ))}
         </div>
@@ -88,7 +86,7 @@ export function Onboarding({ onFinish }) {
         <button
           onClick={() => isLast ? onFinish() : setStep(s => s + 1)}
           className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition active:scale-95 shadow-md"
-          style={{ backgroundColor: color }}
+          style={{ backgroundColor: color }} /* GGA exception: CTA color from SCREENS data */
         >
           {isLast
             ? <><IconCheck size={20} strokeWidth={2.5} /> Comenzar</>

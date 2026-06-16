@@ -1,13 +1,16 @@
-﻿import { useEffect, useState } from 'react'
+﻿import { useEffect, useState, useMemo } from 'react'
 import { IconPlus, IconPencil, IconTrash, IconChevronRight, IconTag, IconRefresh, IconCheck, IconX, IconCash } from '@tabler/icons-react'
+import { CHART_COLORS } from '../lib/chartColors'
 import { supabase } from '../lib/supabase'
 import { useAuth, isDemo } from '../contexts/AuthContext'
-import { demoCategories, demoPaymentMethods, demoCatAdd, demoCatUpdate, demoCatRemove, demoREAdd } from '../lib/demoData'
+import { demoCategories, demoPaymentMethods, demoTransactions, demoCatAdd, demoCatUpdate, demoCatRemove, demoREAdd } from '../lib/demoData'
 import { Button } from '../components/ui/Button'
 import { Input, AmountInput } from '../components/ui/Input'
 import { Modal } from '../components/ui/Modal'
-import { EmojiPicker, IconDisplay } from '../components/ui/EmojiPicker'
-import { format } from 'date-fns'
+import { IconDisplay } from '../components/ui/EmojiPicker'
+import { IconPicker } from '../components/ui/IconPicker'
+import { format, startOfMonth } from 'date-fns'
+import { fmt } from '../lib/fmt'
 
 const FREQ_LABELS = { monthly: 'Mensual', weekly: 'Semanal', yearly: 'Anual' }
 
@@ -144,7 +147,7 @@ function SubcategoryInput({ initial, onSave, onCancel }) {
 
   return (
     <form onSubmit={submit} className="flex items-center gap-2 bg-primary-50 border border-primary-100 rounded-xl px-3 py-2">
-      <EmojiPicker value={icon} onChange={setIcon} compact />
+      <IconPicker value={icon} onChange={setIcon} compact />
       <input
         autoFocus
         value={name}
@@ -319,7 +322,7 @@ function CategoryForm({ initial, parents, paymentMethods, lockAsParent, onSave, 
 
       {/* Ícono + Nombre */}
       <div className="flex gap-3 items-end">
-        <EmojiPicker value={icon} onChange={setIcon} label="Ícono" compact />
+        <IconPicker value={icon} onChange={setIcon} label="Ícono" compact />
         <div className="flex-1">
           <Input
             label="Nombre"
@@ -461,21 +464,27 @@ export function Categorias() {
   const [modal, setModal]                 = useState(null)
   const [quickPay, setQuickPay]           = useState(null)
   const [loading, setLoading]             = useState(true)
+  const [transactions, setTransactions]   = useState([])
+  const [selectedCat, setSelectedCat]     = useState(null)
 
   const load = async () => {
     if (isDemo(user)) {
       setCategories([...demoCategories])
       setPaymentMethods(demoPaymentMethods)
+      setTransactions(demoTransactions)
       setLoading(false)
       return
     }
-    const [catRes, pmRes] = await Promise.all([
+    const monthStart = format(startOfMonth(new Date()), 'yyyy-MM-dd')
+    const [catRes, pmRes, txRes] = await Promise.all([
       supabase.from('categories').select('id, name, type, icon, parent_id').eq('user_id', user.id)
         .order('type').order('parent_id', { nullsFirst: true }).order('name'),
       supabase.from('payment_methods').select('id, name').eq('user_id', user.id).order('name'),
+      supabase.from('transactions').select('type, amount, category_id, transfer_group_id').eq('user_id', user.id).gte('date', monthStart),
     ])
     setCategories(catRes.data ?? [])
     setPaymentMethods(pmRes.data ?? [])
+    setTransactions(txRes.data ?? [])
     setLoading(false)
   }
 
@@ -533,6 +542,19 @@ export function Categorias() {
   const parents   = categories.filter(c => !c.parent_id)
   const byParent  = (pid) => categories.filter(c => c.parent_id === pid)
 
+  const spentByCategory = useMemo(() => {
+    const map = {}
+    transactions.filter(t => t.type === 'expense' && !t.transfer_group_id).forEach(t => {
+      if (t.category_id) map[t.category_id] = (map[t.category_id] || 0) + t.amount
+    })
+    return map
+  }, [transactions])
+
+  const getCatSpent = (cat) => {
+    const subs = categories.filter(c => c.parent_id === cat.id)
+    return [cat.id, ...subs.map(s => s.id)].reduce((s, id) => s + (spentByCategory[id] || 0), 0)
+  }
+
   // Al recargar mientras el modal de padre está abierto, actualizamos la vista
   // pero mantenemos el modal abierto para no interrumpir al usuario
   const reloadKeepingModal = async () => {
@@ -560,75 +582,110 @@ export function Categorias() {
 
   const isEditingParent = modal?.id && !modal?.parent_id
 
-  const renderGroup = (type, label, color) => {
+  const renderGrid = (type, label, labelColor) => {
     const topLevel = parents.filter(c => c.type === type)
     if (topLevel.length === 0) return null
+    const typeTotal = topLevel.reduce((s, cat) => s + getCatSpent(cat), 0)
     return (
       <div key={type}>
-        <h3 className={`text-xs font-semibold uppercase tracking-wide mb-2 ${color}`}>{label}</h3>
-        <div className="space-y-2">
-          {topLevel.map(cat => (
-            <div key={cat.id} className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
-              <div className="flex items-center justify-between px-4 py-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-xl w-7 text-center flex items-center justify-center">
-                    {cat.icon
-                      ? <IconDisplay icon={cat.icon} size={20} />
-                      : <IconTag size={16} className="text-gray-400" />
-                    }
-                  </span>
-                  <span className="font-medium text-gray-900">{cat.name}</span>
-                  {byParent(cat.id).length > 0 && (
-                    <span className="text-xs text-gray-400">({byParent(cat.id).length})</span>
-                  )}
-                </div>
-                <div className="flex gap-1">
-                  {cat.type === 'expense' && (
-                    <button
-                      onClick={() => setQuickPay(cat)}
-                      className="p-1.5 rounded-lg hover:bg-emerald-50 text-gray-300 hover:text-emerald-500 transition"
-                      title="Registrar pago"
-                    >
-                      <IconCash size={14} />
-                    </button>
-                  )}
-                  <button onClick={() => setModal(cat)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
-                    <IconPencil size={14} />
-                  </button>
-                  <button onClick={() => remove(cat.id)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
-                    <IconTrash size={14} />
-                  </button>
+        <h3 className={`text-xs font-semibold uppercase tracking-wide mb-3 ${labelColor}`}>{label}</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          {topLevel.map((cat, idx) => {
+            const color = CHART_COLORS[idx % CHART_COLORS.length]
+            const spent = getCatSpent(cat)
+            const pct = typeTotal > 0 ? spent / typeTotal * 100 : 0
+            const subs = byParent(cat.id)
+            const isSelected = selectedCat?.id === cat.id
+            return (
+              <div
+                key={cat.id}
+                onClick={() => setSelectedCat(isSelected ? null : cat)}
+                className={`bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer transition-all ${
+                  isSelected ? 'border-gray-200 ring-2 shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow'
+                }`}
+                style={/* GGA exception: dynamic ring color from category data */ isSelected ? { boxShadow: `0 0 0 2px ${color}40` } : {}}
+              >
+                {/* GGA exception: colored strip per category from dynamic data */}
+                <div className="h-1 w-full" style={{ backgroundColor: color }} />
+                <div className="p-4">
+                  <div className="flex items-start justify-between mb-2">
+                    {/* GGA exception: icon bg and color derived from dynamic category color */}
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}1f` }}>
+                      {cat.icon
+                        ? <IconDisplay icon={cat.icon} size={20} style={{ color }} />
+                        : <IconTag size={16} style={{ color }} />
+                      }
+                    </div>
+                    <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
+                      {cat.type === 'expense' && (
+                        <button onClick={() => setQuickPay(cat)} className="p-1 rounded-lg hover:bg-emerald-50 text-gray-300 hover:text-emerald-500 transition">
+                          <IconCash size={12} />
+                        </button>
+                      )}
+                      <button onClick={() => setModal(cat)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-primary-600 transition">
+                        <IconPencil size={12} />
+                      </button>
+                      <button onClick={() => remove(cat.id)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">
+                        <IconTrash size={12} />
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
+                  <p className="text-base font-bold text-gray-900 mt-0.5">{fmt(spent)}</p>
+                  <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                    {/* GGA exception: dynamic percentage width and color from data */}
+                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5">
+                    {Math.round(pct)}%{subs.length > 0 ? ` · ${subs.length} sub` : ''}
+                  </p>
                 </div>
               </div>
-              {byParent(cat.id).length > 0 && (
-                <div className="border-t border-gray-50 px-4 pb-2 pt-1 space-y-0.5">
-                  {byParent(cat.id).map(sub => (
-                    <div key={sub.id} className="flex items-center justify-between py-1.5">
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <IconChevronRight size={14} className="text-gray-300" />
-                        <span className="flex items-center">
-                          {sub.icon
-                            ? <IconDisplay icon={sub.icon} size={16} />
-                            : <span className="text-gray-300">·</span>
-                          }
-                        </span>
-                        {sub.name}
-                      </div>
-                      <div className="flex gap-1">
-                        <button onClick={() => setModal(sub)} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
-                          <IconPencil size={13} />
-                        </button>
-                        <button onClick={() => remove(sub.id)} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
-                          <IconTrash size={13} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+            )
+          })}
+        </div>
+
+        {/* Detail panel */}
+        {selectedCat && topLevel.some(c => c.id === selectedCat.id) && (
+          <div className="mt-3 bg-white rounded-xl border border-primary-100 shadow-sm p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-xl bg-gray-50 flex items-center justify-center">
+                  {selectedCat.icon ? <IconDisplay icon={selectedCat.icon} size={18} /> : <IconTag size={14} className="text-gray-400" />}
                 </div>
+                <span className="font-semibold text-gray-900">{selectedCat.name}</span>
+                <span className="text-xs text-gray-400">{fmt(getCatSpent(selectedCat))}</span>
+              </div>
+              <button onClick={e => { e.stopPropagation(); setSelectedCat(null) }} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition">
+                <IconX size={14} />
+              </button>
+            </div>
+            <div className="space-y-1">
+              {byParent(selectedCat.id).length > 0 ? byParent(selectedCat.id).map(sub => {
+                const subSpent = spentByCategory[sub.id] || 0
+                return (
+                  <div key={sub.id} className="flex items-center gap-2 group py-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0">
+                      {sub.icon ? <IconDisplay icon={sub.icon} size={14} /> : <span className="text-gray-300 text-xs">·</span>}
+                    </div>
+                    <span className="text-sm text-gray-700 flex-1 truncate">{sub.name}</span>
+                    <span className="text-sm font-medium text-gray-600">{fmt(subSpent)}</span>
+                    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition">
+                      <button onClick={() => setModal(sub)} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-primary-600 transition">
+                        <IconPencil size={12} />
+                      </button>
+                      <button onClick={() => remove(sub.id)} className="p-1 rounded hover:bg-gray-100 text-gray-400 hover:text-red-500 transition">
+                        <IconTrash size={12} />
+                      </button>
+                    </div>
+                  </div>
+                )
+              }) : (
+                <p className="text-xs text-gray-400 text-center py-2">Sin subcategorías</p>
               )}
             </div>
-          ))}
-        </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -657,8 +714,8 @@ export function Categorias() {
         </div>
       ) : (
         <div className="space-y-6">
-          {renderGroup('expense', 'Egresos', 'text-red-500')}
-          {renderGroup('income', 'Ingresos', 'text-emerald-600')}
+          {renderGrid('expense', 'Egresos', 'text-red-500')}
+          {renderGrid('income', 'Ingresos', 'text-emerald-600')}
         </div>
       )}
 

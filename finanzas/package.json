@@ -11,6 +11,7 @@
     "deploy": "bash deploy.sh"
   },
   "dependencies": {
+    "@iconify/react": "^6.0.2",
     "@supabase/supabase-js": "^2.105.3",
     "@tabler/icons-react": "^3.44.0",
     "date-fns": "^4.1.0",

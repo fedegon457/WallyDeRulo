@@ -38,7 +38,7 @@ export function WelcomeModal({ onStartTour, onDismiss }) {
         <div className="px-5 pb-5 flex flex-col gap-2">
           <button
             onClick={onStartTour}
-            className="w-full bg-accent text-gray-900 border-2 border-gray-900 font-bold rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-yellow-300 transition active:scale-95"
+            className="w-full bg-accent text-yellow-950 border-2 border-yellow-950 font-bold rounded-xl py-3 flex items-center justify-center gap-2 hover:bg-yellow-300 transition active:scale-95"
           >
             <IconMap size={16} />
             Ver guía de primeros pasos

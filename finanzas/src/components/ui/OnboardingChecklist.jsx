@@ -59,8 +59,8 @@ export function OnboardingChecklist({ completed, onDismiss }) {
 
       <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
         <div
-          className="h-2 rounded-full transition-all duration-500"
-          style={{ width: `${(doneCount / STEPS.length) * 100}%`, backgroundColor: '#FCCB30', boxShadow: '0 0 0 1px rgba(0,0,0,0.12)' }}
+          className="h-2 rounded-full transition-all duration-500 bg-accent ring-1 ring-black/10"
+          style={/* GGA exception: dynamic percentage width requires inline style */ { width: `${(doneCount / STEPS.length) * 100}%` }}
         />
       </div>
 
@@ -70,11 +70,9 @@ export function OnboardingChecklist({ completed, onDismiss }) {
           const Inner = (
             <>
               <div
-                className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-base transition-all border"
-                style={done
-                  ? { backgroundColor: '#FCCB30', borderColor: '#e6b820' }
-                  : { backgroundColor: '#f3f4f6', borderColor: 'transparent' }
-                }
+                className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 text-base transition-all border ${
+                  done ? 'bg-accent border-yellow-500' : 'bg-gray-100 border-transparent'
+                }`}
               >
                 {done
                   ? <IconCheck size={15} className="text-gray-900" strokeWidth={3} />
