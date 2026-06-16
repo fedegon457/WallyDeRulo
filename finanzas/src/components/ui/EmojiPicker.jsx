@@ -254,7 +254,7 @@ export function IconDisplay({ icon, size = 20, className = '', dark = false, str
         width={size}
         height={size}
         className={className}
-        style={/* GGA exception: icon color from stored value */ color ? { color } : undefined}
+        style={{ /* GGA exception: icon color from stored value */ ...(color ? { color } : {}) }}
       />
     )
   }
@@ -280,13 +280,13 @@ export function IconDisplay({ icon, size = 20, className = '', dark = false, str
           size={size}
           stroke={stroke}
           className={className}
-          style={/* GGA exception: icon color from stored value */ color ? { color } : undefined}
+          style={{ /* GGA exception: icon color from stored value */ ...(color ? { color } : {}) }}
         />
       )
     }
   }
 
-  return <span style={/* GGA exception: dynamic em size from prop */ { fontSize: size * 0.85, lineHeight: 1 }} className={className}>{iconName}</span>
+  return <span style={{ /* GGA exception: dynamic em size from prop */ fontSize: size * 0.85, lineHeight: 1 }} className={className}>{iconName}</span>
 }
 
 // ─── EmojiPicker ─────────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ export function EmojiPicker({ value, onChange, label = 'Icono', compact = false 
           onClick={() => selectColor(c)}
           title={c}
           className={`w-5 h-5 rounded-full border-2 transition ${currentColor === c ? 'border-gray-500 scale-110' : 'border-transparent'}`}
-          style={/* GGA exception: color swatch from ICON_COLORS data */ { background: c }}
+          style={{ /* GGA exception: color swatch from ICON_COLORS data */ background: c }}
         />
       ))}
     </div>
@@ -441,7 +441,7 @@ export function EmojiPicker({ value, onChange, label = 'Icono', compact = false 
                           onClick={() => selectIcon(name)}
                           className={`w-9 h-9 rounded-xl flex items-center justify-center hover:bg-primary-50 transition ${sel ? 'bg-primary-100 ring-2 ring-primary-400' : ''}`}
                         >
-                          <Ic size={18} stroke={1.5} style={/* GGA exception: user-selected icon color */ sel && currentColor ? { color: currentColor } : undefined} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
+                          <Ic size={18} stroke={1.5} style={{ /* GGA exception: user-selected icon color */ ...(sel && currentColor ? { color: currentColor } : {}) }} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
                         </button>
                       )
                     })}
@@ -465,7 +465,7 @@ export function EmojiPicker({ value, onChange, label = 'Icono', compact = false 
                             onClick={() => selectIcon(name)}
                             className={`w-9 h-9 rounded-xl flex items-center justify-center hover:bg-primary-50 transition ${sel ? 'bg-primary-100 ring-2 ring-primary-400' : ''}`}
                           >
-                            <Ic size={18} stroke={1.5} style={/* GGA exception: user-selected icon color */ sel && currentColor ? { color: currentColor } : undefined} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
+                            <Ic size={18} stroke={1.5} style={{ /* GGA exception: user-selected icon color */ ...(sel && currentColor ? { color: currentColor } : {}) }} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
                           </button>
                         )
                       })}
@@ -491,7 +491,7 @@ export function EmojiPicker({ value, onChange, label = 'Icono', compact = false 
                         onClick={() => selectIcon(b.icon)}
                         className={`flex flex-col items-center gap-0.5 w-14 py-2 rounded-xl hover:bg-primary-50 transition ${sel ? 'bg-primary-100 ring-2 ring-primary-400' : ''}`}
                       >
-                        <Ic size={22} stroke={1.5} style={/* GGA exception: user-selected icon color */ sel && currentColor ? { color: currentColor } : undefined} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
+                        <Ic size={22} stroke={1.5} style={{ /* GGA exception: user-selected icon color */ ...(sel && currentColor ? { color: currentColor } : {}) }} className={sel && !currentColor ? 'text-primary-600' : 'text-gray-500'} />
                         <span className={`text-[9px] font-medium leading-tight text-center truncate w-full px-0.5 ${sel ? 'text-primary-600' : 'text-gray-400'}`}>
                           {b.name}
                         </span>

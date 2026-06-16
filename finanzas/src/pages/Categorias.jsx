@@ -603,17 +603,15 @@ export function Categorias() {
                 className={`bg-white rounded-xl border shadow-sm overflow-hidden cursor-pointer transition-all ${
                   isSelected ? 'border-gray-200 ring-2 shadow-md' : 'border-gray-100 hover:border-gray-200 hover:shadow'
                 }`}
-                style={/* GGA exception: dynamic ring color from category data */ isSelected ? { boxShadow: `0 0 0 2px ${color}40` } : {}}
+                style={{ /* GGA exception: dynamic ring color from category data */ ...(isSelected ? { boxShadow: `0 0 0 2px ${color}40` } : {}) }}
               >
-                {/* GGA exception: colored strip per category from dynamic data */}
-                <div className="h-1 w-full" style={{ backgroundColor: color }} />
+                <div className="h-1 w-full" style={{ /* GGA exception: colored strip per category from dynamic data */ backgroundColor: color }} />
                 <div className="p-4">
                   <div className="flex items-start justify-between mb-2">
-                    {/* GGA exception: icon bg and color derived from dynamic category color */}
-                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: `${color}1f` }}>
+                    <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style={{ /* GGA exception: icon bg derived from dynamic category color */ background: `${color}1f` }}>
                       {cat.icon
-                        ? <IconDisplay icon={cat.icon} size={20} style={{ color }} />
-                        : <IconTag size={16} style={{ color }} />
+                        ? <IconDisplay icon={cat.icon} size={20} style={{ /* GGA exception: icon color from category data */ color }} />
+                        : <IconTag size={16} style={{ /* GGA exception: icon color from category data */ color }} />
                       }
                     </div>
                     <div className="flex gap-0.5" onClick={e => e.stopPropagation()}>
@@ -633,8 +631,7 @@ export function Categorias() {
                   <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
                   <p className="text-base font-bold text-gray-900 mt-0.5">{fmt(spent)}</p>
                   <div className="mt-2 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                    {/* GGA exception: dynamic percentage width and color from data */}
-                    <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
+                    <div className="h-full rounded-full transition-all" style={{ /* GGA exception: dynamic percentage width and color from data */ width: `${Math.min(pct, 100)}%`, backgroundColor: color }} />
                   </div>
                   <p className="text-xs text-gray-400 mt-1.5">
                     {Math.round(pct)}%{subs.length > 0 ? ` · ${subs.length} sub` : ''}

@@ -60,7 +60,7 @@ export function OnboardingChecklist({ completed, onDismiss }) {
       <div className="w-full bg-gray-100 rounded-full h-2 mb-4">
         <div
           className="h-2 rounded-full transition-all duration-500 bg-accent ring-1 ring-black/10"
-          style={/* GGA exception: dynamic percentage width requires inline style */ { width: `${(doneCount / STEPS.length) * 100}%` }}
+          style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${(doneCount / STEPS.length) * 100}%` }}
         />
       </div>
 

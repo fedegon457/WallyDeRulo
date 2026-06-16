@@ -315,17 +315,16 @@ export function Metas() {
             {/* Progress bar with milestone ticks */}
             <div className="relative mb-2">
               <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
-                {/* GGA exception: dynamic percentage width requires inline style */}
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
-                  style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                  style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${Math.min(ratio * 100, 100)}%` }}
                 />
               </div>
               {[25, 50, 75].map(mark => (
                 <div
                   key={mark}
                   className={`absolute top-0 h-3 w-px ${pct >= mark ? 'bg-white/50' : 'bg-gray-300/70'}`}
-                  style={/* GGA exception: dynamic percentage position requires inline style */ { left: `${mark}%` }}
+                  style={{ /* GGA exception: dynamic percentage position requires inline style */ left: `${mark}%` }}
                 />
               ))}
             </div>

@@ -524,7 +524,7 @@ export function GastosFijos() {
           const done = isPaid(e.id)
           return (
             <div key={e.id} className={`flex items-center overflow-hidden transition ${done ? 'opacity-50' : ''}`}>
-              <div className="w-1 self-stretch flex-shrink-0" style={/* GGA exception: urgency color from computed barColor */ { backgroundColor: barColor }} />
+              <div className="w-1 self-stretch flex-shrink-0" style={{ /* GGA exception: urgency color from computed barColor */ backgroundColor: barColor }} />
               <div className={`flex items-center gap-3 flex-1 px-3.5 py-3.5 ${done ? '' : 'hover:bg-orange-50/30'}`}>
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${done ? 'bg-emerald-50' : 'bg-orange-50'}`}>
                   {(e.icon || cat?.icon)
@@ -576,7 +576,7 @@ export function GastosFijos() {
                       <path d="M6,50 A42,42 0 0,1 90,50" fill="none" stroke="#f3f4f6" strokeWidth="8" strokeLinecap="round" />
                       <path d="M6,50 A42,42 0 0,1 90,50" fill="none" stroke="#10b981" strokeWidth="8" strokeLinecap="round"
                         strokeDasharray={arcLen} strokeDashoffset={arcOffset}
-                        style={/* GGA exception: SVG stroke-dashoffset transition has no Tailwind equivalent */ { transition: 'stroke-dashoffset .5s ease' }} />
+                        style={{ /* GGA exception: SVG stroke-dashoffset transition has no Tailwind equivalent */ transition: 'stroke-dashoffset .5s ease' }} />
                     </svg>
                   </div>
                   <div className="flex flex-col items-center mt-1.5">
@@ -605,7 +605,7 @@ export function GastosFijos() {
                   <span className="font-semibold text-emerald-600">{pct}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={/* GGA exception: dynamic percentage width requires inline style */ { width: `${pct}%` }} />
+                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${pct}%` }} />
                 </div>
               </div>
             </div>

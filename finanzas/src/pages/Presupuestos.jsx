@@ -28,20 +28,19 @@ function RingProgress({ ratio, color, size = 56, strokeWidth = 6 }) {
   const offset = circ * (1 - Math.min(ratio, 1))
   const pct = Math.round(ratio * 100)
   return (
-    <div className="relative flex-shrink-0" style={{ width: size, height: size }}>
-      {/* GGA exception: size, SVG transition and ratio-derived color are runtime-computed */}
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
+    <div className="relative flex-shrink-0" style={{ /* GGA exception: size is runtime-computed */ width: size, height: size }}>
+      <svg width={size} height={size} style={{ /* GGA exception: SVG rotation has no Tailwind equivalent */ transform: 'rotate(-90deg)' }}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke}
           strokeWidth={strokeWidth} strokeLinecap="round"
           strokeDasharray={circ} strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+          style={{ /* GGA exception: SVG stroke-dashoffset transition has no Tailwind equivalent */ transition: 'stroke-dashoffset 0.5s ease' }}
         />
       </svg>
       <span
         className="absolute inset-0 flex items-center justify-center text-xs font-bold"
-        style={{ color: ratio >= 1 ? '#ef4444' : ratio >= 0.8 ? '#d97706' : '#374151' }}
+        style={{ /* GGA exception: ratio-derived color computed at runtime */ color: ratio >= 1 ? '#ef4444' : ratio >= 0.8 ? '#d97706' : '#374151' }}
       >
         {pct}%
       </span>
@@ -60,10 +59,9 @@ function ProgressBar({ spent, limit, thick = false }) {
   const { bar } = ratioColor(ratio)
   return (
     <div className={`bg-gray-100 rounded-full overflow-hidden ${thick ? 'h-3' : 'h-1.5'}`}>
-      {/* GGA exception: dynamic percentage width requires inline style */}
       <div
         className={`h-full rounded-full transition-all ${bar}`}
-        style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+        style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${Math.min(ratio * 100, 100)}%` }}
       />
     </div>
   )
@@ -368,7 +366,7 @@ export function Presupuestos() {
                 {categoryBudgets.map((b, i) => (
                   <div
                     key={b.id}
-                    style={/* GGA exception: dynamic percentage width and chart palette color */ { width: `${b.amount / totalCategoryBudget * 100}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                    style={{ /* GGA exception: dynamic percentage width and chart palette color */ width: `${b.amount / totalCategoryBudget * 100}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
                     className="h-full"
                   />
                 ))}
@@ -379,8 +377,7 @@ export function Presupuestos() {
                   if (!cat) return null
                   return (
                     <div key={b.id} className="flex items-center gap-1.5">
-                      {/* GGA exception: identity dot color from chart palette */}
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ /* GGA exception: identity dot color from chart palette */ backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }} />
                       <span className="text-xs text-gray-600">{cat.name} <span className="font-semibold">{Math.round(b.amount / totalCategoryBudget * 100)}%</span></span>
                     </div>
                   )
@@ -408,15 +405,13 @@ export function Presupuestos() {
                         <RingProgress ratio={consumedRatio} size={52} strokeWidth={5} />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 mb-0.5">
-                            {/* GGA exception: identity dot color from dynamic chart palette */}
-                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />
+                            <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ /* GGA exception: identity dot color from dynamic chart palette */ backgroundColor: color }} />
                             <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
                           </div>
                           <p className="text-xs text-gray-400">{fmt(spent)} <span className="text-gray-300">de</span> {fmt(b.amount)}</p>
                           {/* Allocation bar — shows how big this budget is relative to others */}
                           <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
-                            {/* GGA exception: color and width from dynamic data */}
-                            <div className="h-full rounded-full" style={{ width: `${Math.min(allocationPct, 100)}%`, backgroundColor: color, opacity: 0.5 }} />
+                            <div className="h-full rounded-full" style={{ /* GGA exception: color and width from dynamic data */ width: `${Math.min(allocationPct, 100)}%`, backgroundColor: color, opacity: 0.5 }} />
                           </div>
                           <span className="text-xs text-gray-400">{Math.round(allocationPct)}% del total presupuestado</span>
                         </div>
@@ -454,10 +449,9 @@ export function Presupuestos() {
                                 <span className="text-xs text-gray-500">{fmt(subSpent)}</span>
                               </div>
                               <div className="h-1 bg-gray-200 rounded-full overflow-hidden">
-                                {/* GGA exception: dynamic percentage width and category color from data */}
                                 <div
                                   className="h-full rounded-full opacity-60"
-                                  style={{ width: `${Math.min(subRatio * 100, 100)}%`, backgroundColor: color }}
+                                  style={{ /* GGA exception: dynamic percentage width and category color from data */ width: `${Math.min(subRatio * 100, 100)}%`, backgroundColor: color }}
                                 />
                               </div>
                             </div>

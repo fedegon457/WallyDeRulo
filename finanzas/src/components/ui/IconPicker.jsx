@@ -38,7 +38,7 @@ export function IconDisplay({ icon, size = 20, className = '', stroke = 1.5 }) {
         width={size}
         height={size}
         className={className}
-        style={color ? { color } : undefined}
+        style={{ /* GGA exception: icon color from stored value */ ...(color ? { color } : {}) }}
       />
     )
   }
@@ -52,7 +52,7 @@ export function IconDisplay({ icon, size = 20, className = '', stroke = 1.5 }) {
           size={size}
           stroke={stroke}
           className={className}
-          style={color ? { color } : undefined}
+          style={{ /* GGA exception: icon color from stored value */ ...(color ? { color } : {}) }}
         />
       )
     }
@@ -73,7 +73,7 @@ export function IconDisplay({ icon, size = 20, className = '', stroke = 1.5 }) {
   }
 
   // Emoji / text fallback
-  return <span style={/* GGA exception: dynamic em size from prop */ { fontSize: size * 0.85, lineHeight: 1 }} className={className}>{iconId}</span>
+  return <span style={{ /* GGA exception: dynamic em size from prop */ fontSize: size * 0.85, lineHeight: 1 }} className={className}>{iconId}</span>
 }
 
 // ═══ IconCellPreview ═══════════════════════════════════════════════════════════
@@ -85,10 +85,9 @@ export function IconCellPreview({ iconId, color, size = 40, className = '' }) {
   return (
     <div
       className={`flex items-center justify-center rounded-xl border-2 border-ink overflow-hidden flex-shrink-0 ${className}`}
-      style={{ width: size, height: size, background: bg, boxShadow: '2px 2px 0 #1a1a1a' }}
+      style={{ /* GGA exception: size, bg and boxShadow computed from color prop */ width: size, height: size, background: bg, boxShadow: '2px 2px 0 #1a1a1a' }}
     >
-      {/* GGA exception: size, bg and ic computed from icon value and color prop */}
-      <Icon icon={iconId || 'ph:tag-duotone'} width={size * 0.52} height={size * 0.52} style={{ color: ic }} />
+      <Icon icon={iconId || 'ph:tag-duotone'} width={size * 0.52} height={size * 0.52} style={{ /* GGA exception: icon display color derived from color prop */ color: ic }} />
     </div>
   )
 }
@@ -153,12 +152,11 @@ export function IconPickerModal({ value, onChange, onClose }) {
 
         {/* Preview row */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3 flex-shrink-0">
-          {/* GGA exception: preview bg/color derived from user-selected color */}
           <div
             className="w-12 h-12 rounded-xl border-[2.5px] border-ink shadow-[2px_2px_0_#1a1a1a] flex items-center justify-center flex-shrink-0 transition-all"
-            style={{ background: bg }}
+            style={{ /* GGA exception: preview bg derived from user-selected color */ background: bg }}
           >
-            <Icon icon={selIcon} width={28} height={28} style={{ color: dc }} />
+            <Icon icon={selIcon} width={28} height={28} style={{ /* GGA exception: preview icon color derived from user-selected color */ color: dc }} />
           </div>
           <div>
             <div className="text-[9px] font-bold tracking-[2px] text-gray-400 uppercase mb-0.5">Seleccionado</div>
@@ -185,7 +183,7 @@ export function IconPickerModal({ value, onChange, onClose }) {
                         ? 'scale-[1.25] shadow-[0_0_0_2px_#1a1a1a] z-10 relative'
                         : 'border-black/10 hover:scale-110'
                     }`}
-                    style={/* GGA exception: color swatch from ALL_COLORS data */ { background: c, borderColor: c === selColor ? undefined : 'rgba(0,0,0,0.12)' }}
+                    style={{ /* GGA exception: color swatch from ALL_COLORS data */ background: c, borderColor: c === selColor ? undefined : 'rgba(0,0,0,0.12)' }}
                   />
                 ))}
               </div>
@@ -207,7 +205,7 @@ export function IconPickerModal({ value, onChange, onClose }) {
                       ? 'scale-[1.25] shadow-[0_0_0_2px_#1a1a1a] z-10 relative'
                       : 'border-black/10 hover:scale-110'
                   }`}
-                  style={/* GGA exception: color swatch from MAIN_COLORS data */ { background: c }}
+                  style={{ /* GGA exception: color swatch from MAIN_COLORS data */ background: c }}
                 />
               ))}
               <button
@@ -270,7 +268,7 @@ export function IconPickerModal({ value, onChange, onClose }) {
                             : 'border-transparent hover:bg-[#FFF8E0] hover:border-[#FFB500]'
                         }`}
                       >
-                        <Icon icon={id} width={20} height={20} style={/* GGA exception: luminance-corrected icon color */ { color: dc }} />
+                        <Icon icon={id} width={20} height={20} style={{ /* GGA exception: luminance-corrected icon color */ color: dc }} />
                       </button>
                     ))}
                   </div>
@@ -288,7 +286,7 @@ export function IconPickerModal({ value, onChange, onClose }) {
                   </div>
                   <div
                     className="grid gap-1.5"
-                    style={/* GGA exception: dynamic column count per brand section */ { gridTemplateColumns: `repeat(${section.cols}, 1fr)` }}
+                    style={{ /* GGA exception: dynamic column count per brand section */ gridTemplateColumns: `repeat(${section.cols}, 1fr)` }}
                   >
                     {section.items.map(item => (
                       <button
@@ -302,7 +300,7 @@ export function IconPickerModal({ value, onChange, onClose }) {
                       >
                         <div
                           className="h-11 flex items-center justify-center"
-                          style={/* GGA exception: brand bg color from BRAND_SECTIONS data */ { background: item.bg }}
+                          style={{ /* GGA exception: brand bg color from BRAND_SECTIONS data */ background: item.bg }}
                         >
                           <Icon icon={item.id} width={24} height={24} style={{ color: item.ic }} />
                         </div>
@@ -350,7 +348,7 @@ export function IconPicker({ value, onChange, label, compact = false }) {
           type="button"
           onClick={() => setOpen(true)}
           className="w-12 h-10 flex items-center justify-center rounded-xl border-2 border-gray-200 hover:border-primary-400 transition overflow-hidden"
-          style={/* GGA exception: bg/color from stored icon value */ !isNew ? { background: bg } : {}}
+          style={{ /* GGA exception: bg/color from stored icon value */ ...(!isNew ? { background: bg } : {}) }}
         >
           {isNew
             ? <Icon icon="ph:plus-bold" width={16} className="text-gray-300" />
@@ -376,7 +374,7 @@ export function IconPicker({ value, onChange, label, compact = false }) {
           type="button"
           onClick={() => setOpen(true)}
           className="w-12 h-10 rounded-xl border-2 border-gray-200 hover:border-primary-400 transition flex items-center justify-center overflow-hidden"
-          style={/* GGA exception: bg/color from stored icon value */ !isNew ? { background: bg } : {}}
+          style={{ /* GGA exception: bg/color from stored icon value */ ...(!isNew ? { background: bg } : {}) }}
         >
           {isNew
             ? <Icon icon="ph:question-duotone" width={20} className="text-gray-300" />
