@@ -39,12 +39,12 @@ jobs:
           echo "NODE: $(node --version) NPM: $(npm --version)"
           npm run build 2>&1 | tee /tmp/build_output.txt; BUILD_EXIT=${PIPESTATUS[0]}
           if [ $BUILD_EXIT -ne 0 ]; then
-            CONTENT=$(python3 -c "import json,sys; print(json.dumps(open('/tmp/build_output.txt').read()[-8000:]))")
-            curl -s -X POST https://api.github.com/gists \
-              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"public\":true,\"description\":\"MyWalli CI build error\",\"files\":{\"build-error.txt\":{\"content\":$CONTENT}}}" \
-              | python3 -c "import sys,json; g=json.load(sys.stdin); print('GIST:', g.get('html_url','error: '+str(g)))"
+            git config user.email "ci@ci.com"
+            git config user.name "CI"
+            tail -150 /tmp/build_output.txt > build-error-log.txt
+            git add build-error-log.txt
+            git commit -m "ci: build error log [skip ci]"
+            git push origin HEAD:build-debug
           fi
           exit $BUILD_EXIT
 
