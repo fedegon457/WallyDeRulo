@@ -37,13 +37,14 @@ jobs:
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
           echo "NODE: $(node --version) NPM: $(npm --version)"
-          npm run build 2>&1 | tee /tmp/build_output.txt
-          BUILD_EXIT=${PIPESTATUS[0]}
+          npm run build 2>&1 | tee /tmp/build_output.txt; BUILD_EXIT=${PIPESTATUS[0]}
           if [ $BUILD_EXIT -ne 0 ]; then
-            echo "## Build Failure — Node $(node --version)" >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
-            tail -120 /tmp/build_output.txt >> $GITHUB_STEP_SUMMARY
-            echo '```' >> $GITHUB_STEP_SUMMARY
+            CONTENT=$(python3 -c "import json,sys; print(json.dumps(open('/tmp/build_output.txt').read()[-8000:]))")
+            curl -s -X POST https://api.github.com/gists \
+              -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"public\":true,\"description\":\"MyWalli CI build error\",\"files\":{\"build-error.txt\":{\"content\":$CONTENT}}}" \
+              | python3 -c "import sys,json; g=json.load(sys.stdin); print('GIST:', g.get('html_url','error: '+str(g)))"
           fi
           exit $BUILD_EXIT
 
