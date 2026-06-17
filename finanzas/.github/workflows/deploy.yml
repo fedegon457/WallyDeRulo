@@ -36,17 +36,16 @@ jobs:
             exit 1
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
-          echo "NODE: $(node --version)"
+          echo "NODE: $(node --version) NPM: $(npm --version)"
           npm run build 2>&1 | tee /tmp/build_output.txt
-          exit ${PIPESTATUS[0]}
-
-      - name: Upload build log on failure
-        if: failure() && steps.build.outcome == 'failure'
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: /tmp/build_output.txt
-          retention-days: 1
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "## Build Failure — Node $(node --version)" >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+            tail -120 /tmp/build_output.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+          exit $BUILD_EXIT
 
       - name: Deploy to server
         working-directory: finanzas
