@@ -35,9 +35,14 @@ jobs:
             exit 1
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
-          echo "DEBUG .env lines=$(wc -l < .env) chars=$(wc -c < .env)"
-          echo "DEBUG .env first key=$(head -1 .env | cut -d= -f1)"
-          npm run build
+          echo "NODE: $(node --version) NPM: $(npm --version)"
+          npm run build 2>&1 | tee /tmp/build_output.txt
+          BUILD_EXIT=${PIPESTATUS[0]}
+          if [ $BUILD_EXIT -ne 0 ]; then
+            echo "=== BUILD FAILED — last 80 lines ==="
+            tail -80 /tmp/build_output.txt
+          fi
+          exit $BUILD_EXIT
 
       - name: Deploy to server
         working-directory: finanzas
