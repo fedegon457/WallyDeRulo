@@ -25,24 +25,28 @@ jobs:
         run: npm ci
 
       - name: Build
+        id: build
         working-directory: finanzas
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "❌ Supabase secrets missing – configure VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in GitHub Secrets"
+            echo "❌ Supabase secrets missing"
             exit 1
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
-          echo "NODE: $(node --version) NPM: $(npm --version)"
+          echo "NODE: $(node --version)"
           npm run build 2>&1 | tee /tmp/build_output.txt
-          BUILD_EXIT=${PIPESTATUS[0]}
-          if [ $BUILD_EXIT -ne 0 ]; then
-            echo "=== BUILD FAILED — last 80 lines ==="
-            tail -80 /tmp/build_output.txt
-          fi
-          exit $BUILD_EXIT
+          exit ${PIPESTATUS[0]}
+
+      - name: Upload build log on failure
+        if: failure() && steps.build.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: /tmp/build_output.txt
+          retention-days: 1
 
       - name: Deploy to server
         working-directory: finanzas
