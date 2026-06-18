@@ -509,7 +509,7 @@ export function Cuentas() {
     <div className="p-6 space-y-6 max-w-3xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cuentas</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Cuentas</h1>
           <p className="text-gray-500 text-sm">Tu patrimonio en un vistazo</p>
         </div>
         <div className="flex items-center gap-2">
@@ -527,19 +527,19 @@ export function Cuentas() {
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">Capital total</p>
-          <p className={`font-bold text-lg ${totalCapital >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(totalCapital)}</p>
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4 text-center">
+          <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400 mb-1">Capital total</p>
+          <p className={`font-mono font-black text-lg ${totalCapital >= 0 ? 'text-emerald-600' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(totalCapital)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">solo ARS</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">Lo que debo</p>
-          <p className="font-bold text-lg text-orange-500">{balancesHidden ? '••••••' : fmtARS(totalDebt)}</p>
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4 text-center">
+          <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400 mb-1">Lo que debo</p>
+          <p className="font-mono font-black text-lg text-orange-500">{balancesHidden ? '••••••' : fmtARS(totalDebt)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">solo ARS</p>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 text-center">
-          <p className="text-xs text-gray-400 mb-1">Balance neto</p>
-          <p className={`font-bold text-lg ${netBalance >= 0 ? 'text-primary-600' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(netBalance)}</p>
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4 text-center">
+          <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400 mb-1">Balance neto</p>
+          <p className={`font-mono font-black text-lg ${netBalance >= 0 ? 'text-ink' : 'text-red-500'}`}>{balancesHidden ? '••••••' : fmtARS(netBalance)}</p>
           <p className="text-[10px] text-gray-400 mt-0.5">capital menos deudas</p>
         </div>
       </div>
@@ -573,7 +573,7 @@ export function Cuentas() {
                     const isOrphanDebit = account.account_type === 'debit_card' && !account.parent_account_id
 
                     return (
-                      <div key={account.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+                      <div key={account.id} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4">
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-3 min-w-0">
                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${account.icon ? 'bg-white border border-gray-200' : info.color}`}>
@@ -581,7 +581,7 @@ export function Cuentas() {
                             </div>
                             <div className="min-w-0">
                               <p className="font-medium text-gray-900 text-sm truncate">{account.name}</p>
-                              <p className="text-xs text-gray-400">{info.label} · {currency}</p>
+                              <p className="font-mono text-[9px] tracking-[2px] uppercase px-2 py-0.5 rounded-full border border-ink/30 bg-[#FFF8E0] text-ink/60 mt-0.5 inline-block">{info.label} · {currency}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-1 flex-shrink-0">
@@ -599,7 +599,7 @@ export function Cuentas() {
 
                         <div className="mt-3 pt-3 border-t border-gray-50 flex justify-between items-baseline">
                           <span className="text-xs text-gray-400">{info.isDebt ? 'Deuda actual' : 'Saldo actual'}</span>
-                          <span className={`font-bold text-base ${info.isDebt ? 'text-orange-500' : balance >= 0 ? 'text-gray-900' : 'text-red-500'}`}>
+                          <span className={`font-mono font-black text-base ${info.isDebt ? 'text-orange-500' : balance >= 0 ? 'text-ink' : 'text-red-500'}`}>
                             {balancesHidden ? '••••••' : `${info.isDebt ? '-' : ''}${fmtCurrency(Math.abs(balance), currency)}`}
                           </span>
                         </div>

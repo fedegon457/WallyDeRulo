@@ -48,7 +48,7 @@ function PieSection({ data }) {
             const idx = data.findIndex(d => d.name === item.name)
             const pct = total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0'
             return (
-              <div className="bg-white rounded-2xl shadow-xl border border-primary-100 px-4 py-3 min-w-[150px]">
+              <div className="bg-paper border-[1.5px] border-ink shadow-brutal-sm rounded-2xl px-4 py-3 min-w-[150px]">
                 <div className="flex items-center gap-2 mb-1.5">
                   <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${CHART_COLOR_CLASSES[idx % CHART_COLOR_CLASSES.length]}`} />
                   <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
@@ -289,9 +289,9 @@ export function Dashboard() {
     <div className="p-5 space-y-5 max-w-5xl mx-auto">
 
       {/* Hero balance card */}
-      <div className="bg-primary-500 rounded-2xl p-6 text-white border-2 border-primary-600">
-        <p className="text-white/70 text-xs font-bold uppercase tracking-widest mb-1">Balance del mes</p>
-        <p className="text-4xl font-extrabold tracking-tight leading-none mb-2">{fmt(balance)}</p>
+      <div className="bg-ink rounded-2xl p-6 border-[2.5px] border-ink shadow-brutal">
+        <p className="text-gold/70 text-[10px] font-mono tracking-[2px] uppercase mb-1">Balance del mes</p>
+        <p className="text-4xl font-black tracking-tight leading-none mb-2 text-gold font-mono">{fmt(balance)}</p>
         <div className="flex items-center gap-2">
           <button
             onClick={() => changeMonth(-1)}
@@ -299,7 +299,7 @@ export function Dashboard() {
           >
             <IconChevronLeft size={13} className="text-white" />
           </button>
-          <span className="inline-block px-2.5 py-0.5 rounded-lg text-xs font-bold text-gray-900 border border-yellow-400 bg-accent capitalize">{mes}</span>
+          <span className="inline-block px-2.5 py-0.5 rounded-lg bg-gold border-[1.5px] border-ink text-ink font-mono text-[10px] tracking-[1px] capitalize">{mes}</span>
           <button
             onClick={() => changeMonth(1)}
             className="w-6 h-6 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center transition active:scale-90"
@@ -308,17 +308,17 @@ export function Dashboard() {
           </button>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-5">
-          <div className="bg-white/15 rounded-xl p-3 border border-white/20">
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">Ingresos</p>
-            <p className="text-white font-extrabold text-sm truncate">{fmt(data.income)}</p>
+          <div className="bg-gold/20 rounded-xl p-3 border border-gold/40">
+            <p className="text-gold/70 text-[10px] font-mono tracking-[2px] uppercase mb-0.5">Ingresos</p>
+            <p className="font-black font-mono text-gold text-sm truncate">{fmt(data.income)}</p>
           </div>
-          <div className="bg-white/15 rounded-xl p-3 border border-white/20">
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">Egresos</p>
-            <p className="text-white font-extrabold text-sm truncate">{fmt(data.expense)}</p>
+          <div className="bg-gold/20 rounded-xl p-3 border border-gold/40">
+            <p className="text-gold/70 text-[10px] font-mono tracking-[2px] uppercase mb-0.5">Egresos</p>
+            <p className="font-black font-mono text-gold text-sm truncate">{fmt(data.expense)}</p>
           </div>
-          <div className="bg-white/15 rounded-xl p-3 border border-white/20">
-            <p className="text-white/60 text-[10px] font-bold uppercase tracking-wider mb-0.5">Me deben</p>
-            <p className="text-white font-extrabold text-sm truncate">{fmt(totalPendingDebt)}</p>
+          <div className="bg-gold/20 rounded-xl p-3 border border-gold/40">
+            <p className="text-gold/70 text-[10px] font-mono tracking-[2px] uppercase mb-0.5">Me deben</p>
+            <p className="font-black font-mono text-gold text-sm truncate">{fmt(totalPendingDebt)}</p>
           </div>
         </div>
       </div>
@@ -329,8 +329,8 @@ export function Dashboard() {
 
       {/* Charts + recent */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
-          <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">Egresos por categoria</h2>
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
+          <h2 className="text-[11px] font-black text-ink uppercase tracking-[2px] font-mono mb-4">Egresos por categoria</h2>
           {data.byCategory.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-48 text-gray-400">
               <p className="text-sm">Sin egresos este mes</p>
@@ -353,9 +353,9 @@ export function Dashboard() {
           )}
         </div>
 
-        <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Ultimas transacciones</h2>
+            <h2 className="text-[11px] font-black text-ink uppercase tracking-[2px] font-mono">Ultimas transacciones</h2>
             <Link to="/transacciones" className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
               Ver todas <IconArrowRight size={13} />
             </Link>
@@ -376,7 +376,7 @@ export function Dashboard() {
                     <p className="text-sm font-semibold text-gray-900 truncate">{t.notes || t.categories?.name || '-'}</p>
                     <p className="text-xs text-gray-400 font-medium">{format(new Date(t.date), 'dd/MM/yyyy')}</p>
                   </div>
-                  <span className={`text-sm font-bold flex-shrink-0 ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <span className={`text-sm font-black font-mono flex-shrink-0 ${t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {t.type === 'income' ? '+' : '-'}{fmt(t.amount)}
                   </span>
                 </div>
@@ -387,10 +387,10 @@ export function Dashboard() {
       </div>
 
       {pendingDebts.length > 0 && (
-        <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Compartidos pendientes</h2>
+              <h2 className="text-[11px] font-black text-ink uppercase tracking-[2px] font-mono">Compartidos pendientes</h2>
               <span className="bg-amber-100 text-amber-700 text-xs font-bold px-2 py-0.5 rounded-full">{pendingDebts.length}</span>
             </div>
             <Link to="/compartidos" className="text-xs font-semibold text-primary-600 hover:text-primary-700 flex items-center gap-1">
@@ -427,10 +427,10 @@ export function Dashboard() {
           .filter(e => e.frequency === 'monthly' && e.day_of_month)
           .map(e => ({ day: e.day_of_month, name: e.name, paid: recurringPayments.some(p => p.recurring_expense_id === e.id) }))
         return (
-          <div className="bg-white rounded-3xl border border-primary-100/60 shadow-card p-5">
+          <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Gastos Fijos</h2>
+                <h2 className="text-[11px] font-black text-ink uppercase tracking-[2px] font-mono">Gastos Fijos</h2>
                 {unpaidRecurring.length > 0 && (
                   <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">{unpaidRecurring.length} pend.</span>
                 )}

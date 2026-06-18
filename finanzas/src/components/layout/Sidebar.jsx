@@ -1,12 +1,13 @@
 import { NavLink, Link } from 'react-router-dom'
 import {
   IconLayoutDashboard, IconArrowsUpDown, IconTag, IconCreditCard,
-  IconUsers, IconChartBar, IconLogout, IconX, IconRefresh, IconWallet,
+  IconUsers, IconChartBar, IconLogout, IconRefresh, IconWallet,
   IconCalculator, IconTarget, IconUserCircle, IconPigMoney, IconScale,
   IconSun, IconMoon, IconTrendingUp
 } from '@tabler/icons-react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
+import { ChromeBar } from '../ui/ChromeBar'
 
 const desktopNav = [
   { to: '/',              icon: IconLayoutDashboard, label: 'Dashboard',          color: '#4ab8b8' },
@@ -60,7 +61,7 @@ export function Sidebar({ open, onClose }) {
               className={({ isActive }) =>
                 `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold transition-all ${
                   isActive
-                    ? 'bg-white text-primary-600 shadow-sm'
+                    ? 'bg-gold border-[1.5px] border-ink text-ink shadow-brutal-sm'
                     : 'text-primary-800 hover:bg-primary-400/30 hover:text-primary-900'
                 }`
               }
@@ -68,9 +69,9 @@ export function Sidebar({ open, onClose }) {
               {({ isActive }) => (
                 <>
                   <div
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}
+                    className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 transition-all border ${isActive ? 'bg-gold/50 border-ink/30' : 'border-transparent'}`}
                   >
-                    <Icon size={16} className={isActive ? 'text-gray-900' : 'text-primary-700'} stroke={2} />
+                    <Icon size={16} className={isActive ? 'text-ink' : 'text-primary-700'} stroke={2} />
                   </div>
                   <span className="flex-1">{label}</span>
                 </>
@@ -84,14 +85,14 @@ export function Sidebar({ open, onClose }) {
             to="/mi-cuenta"
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-bold transition-all ${
-                isActive ? 'bg-white text-primary-600 shadow-sm' : 'text-primary-700 hover:bg-primary-400/30 hover:text-primary-900'
+                isActive ? 'bg-gold border-[1.5px] border-ink text-ink shadow-brutal-sm' : 'text-primary-700 hover:bg-primary-400/30 hover:text-primary-900'
               }`
             }
           >
             {({ isActive }) => (
               <>
-                <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border ${isActive ? 'bg-accent border-accent/80' : 'border-transparent'}`}>
-                  <IconUserCircle size={16} className={isActive ? 'text-gray-900' : 'text-primary-700'} stroke={2} />
+                <div className={`w-7 h-7 rounded-xl flex items-center justify-center flex-shrink-0 border ${isActive ? 'bg-gold/50 border-ink/30' : 'border-transparent'}`}>
+                  <IconUserCircle size={16} className={isActive ? 'text-ink' : 'text-primary-700'} stroke={2} />
                 </div>
                 <span className="flex-1">Mi cuenta</span>
               </>
@@ -122,18 +123,15 @@ export function Sidebar({ open, onClose }) {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-white shadow-2xl flex flex-col">
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-paper border-r-[2.5px] border-ink flex flex-col">
 
-            <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b-2 border-gray-100">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 bg-primary-500 rounded-2xl flex items-center justify-center">
-                  <IconWallet size={16} className="text-primary-800" stroke={2} />
-                </div>
-                <span className="font-extrabold text-gray-900 tracking-tight text-lg">MyWalli</span>
+            <ChromeBar title="mywalli" onClose={onClose} color="#bae8e8" />
+
+            <div className="flex items-center gap-2.5 px-5 py-4 border-b-[2px] border-ink">
+              <div className="w-9 h-9 bg-primary-500 rounded-2xl flex items-center justify-center">
+                <IconWallet size={16} className="text-primary-800" stroke={2} />
               </div>
-              <button onClick={onClose} className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400">
-                <IconX size={20} />
-              </button>
+              <span className="font-extrabold text-gray-900 tracking-tight text-lg">MyWalli</span>
             </div>
 
             <nav className="flex-1 overflow-y-auto p-3 space-y-0.5">
@@ -147,18 +145,17 @@ export function Sidebar({ open, onClose }) {
                   onClick={onClose}
                   className={({ isActive }) =>
                     `flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition-all ${
-                      isActive ? 'text-gray-900' : 'text-gray-700 hover:bg-gray-50'
+                      isActive ? 'bg-[#FFF8E0] text-ink border-l-2 border-gold' : 'text-gray-700 hover:bg-[#FFF8E0]/50'
                     }`
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      {/* GGA exception: per-nav-item color from static array */}
                       <div
                         className="w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 transition-all"
-                        style={{ background: `${color}${isActive ? '22' : '15'}` }}
+                        style={{ /* GGA exception: per-nav-item hex color from static array, alpha suffix not expressible in Tailwind */ background: `${color}${isActive ? '22' : '15'}` }}
                       >
-                        <Icon size={16} stroke={isActive ? 2.5 : 2} style={{ color }} />
+                        <Icon size={16} stroke={isActive ? 2.5 : 2} style={{ /* GGA exception: per-nav-item hex color from static array */ color }} />
                       </div>
                       {label}
                     </>
@@ -167,7 +164,7 @@ export function Sidebar({ open, onClose }) {
               ))}
             </nav>
 
-            <div className="p-3 border-t-2 border-gray-100 space-y-1">
+            <div className="p-3 border-t-[2px] border-ink space-y-1">
               <div className="flex gap-3 px-3 py-1">
                 <Link to="/privacidad" onClick={onClose} className="text-xs text-gray-400 hover:text-primary-600 transition">Privacidad</Link>
                 <span className="text-gray-200">·</span>
@@ -175,7 +172,7 @@ export function Sidebar({ open, onClose }) {
               </div>
               <button
                 onClick={() => { toggle(); }}
-                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all w-full"
+                className="flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold text-gray-700 hover:bg-[#FFF8E0]/50 transition-all w-full"
               >
                 <div className="w-8 h-8 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
                   {dark ? <IconSun size={16} className="text-gray-500" stroke={2} /> : <IconMoon size={16} className="text-gray-500" stroke={2} />}

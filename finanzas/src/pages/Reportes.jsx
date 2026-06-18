@@ -11,11 +11,11 @@ import { IconTrendingUp, IconTrendingDown, IconMinus } from '@tabler/icons-react
 import { es } from 'date-fns/locale'
 import { fmt } from '../lib/fmt'
 
-const COLORS       = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899', '#84cc16']
-const COLOR_CLASSES = ['bg-blue-500', 'bg-emerald-500', 'bg-amber-400', 'bg-red-500', 'bg-violet-500', 'bg-cyan-500', 'bg-pink-500', 'bg-lime-500']
+const COLORS       = ['#FFB500', '#41b8b8', '#1a1a1a', '#ffd803', '#206f6f', '#EF4444', '#22C55E', '#bae8e8']
+const COLOR_CLASSES = ['bg-[#FFB500]', 'bg-[#41b8b8]', 'bg-[#1a1a1a]', 'bg-[#ffd803]', 'bg-[#206f6f]', 'bg-red-500', 'bg-green-500', 'bg-[#bae8e8]']
 
 function SectionTitle({ children }) {
-  return <h2 className="text-base font-semibold text-gray-900 mb-4">{children}</h2>
+  return <h2 className="text-sm font-black text-ink uppercase tracking-[2px] font-mono mb-4">{children}</h2>
 }
 
 function PieSection({ data }) {
@@ -53,7 +53,7 @@ function PieSection({ data }) {
             const color = COLORS[idx % COLORS.length]
             const pct = ((item.value / total) * 100).toFixed(1)
             return (
-              <div className="bg-white rounded-2xl shadow-xl border border-gray-100 px-4 py-3 min-w-[150px]">
+              <div className="bg-paper rounded-2xl border-[1.5px] border-ink shadow-brutal-sm px-4 py-3 min-w-[150px]">
                 <div className="flex items-center gap-2 mb-2">
                   <div className={`w-3 h-3 rounded-full flex-shrink-0 ${COLOR_CLASSES[idx % COLOR_CLASSES.length]}`} />
                   <span className="font-semibold text-gray-800 text-sm">{item.name}</span>
@@ -187,7 +187,7 @@ export function Reportes() {
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Reportes</h1>
           <p className="text-gray-500 text-sm">Analizá tus finanzas</p>
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
@@ -210,14 +210,14 @@ export function Reportes() {
           { label: 'Prom. ingresos/mes', value: fmt(avgIncome), color: 'text-primary-600' },
           { label: 'Prom. egresos/mes', value: fmt(avgExpense), color: 'text-orange-500' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-            <p className="text-xs text-gray-400">{s.label}</p>
-            <p className={`font-bold text-base mt-1 ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4">
+            <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400">{s.label}</p>
+            <p className={`font-mono font-black text-base mt-1 ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
         <SectionTitle>Ingresos vs Egresos por mes</SectionTitle>
         <ResponsiveContainer width="100%" height={260}>
           <BarChart data={monthlyData} barGap={4}>
@@ -232,7 +232,7 @@ export function Reportes() {
         </ResponsiveContainer>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
         <SectionTitle>Balance mensual</SectionTitle>
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={monthlyData}>
@@ -246,7 +246,7 @@ export function Reportes() {
       </div>
 
       {/* Monthly comparison */}
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+      <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-semibold text-gray-900">Comparativa mensual</h2>
           <span className="text-xs text-gray-400">
@@ -286,7 +286,7 @@ export function Reportes() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
           <SectionTitle>Egresos por categoría</SectionTitle>
           {expensesByCategory.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">Sin egresos en el período</p>
@@ -306,7 +306,7 @@ export function Reportes() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
           <SectionTitle>Ingresos por categoría</SectionTitle>
           {incomeByCategory.length === 0 ? (
             <p className="text-gray-400 text-sm text-center py-8">Sin ingresos en el período</p>

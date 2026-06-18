@@ -247,7 +247,7 @@ export function Metas() {
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Metas de ahorro</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Metas de ahorro</h1>
           <p className="text-gray-500 text-sm">Seguí el progreso de tus objetivos</p>
         </div>
         <Button onClick={() => setModal({})} size="md">
@@ -262,9 +262,9 @@ export function Metas() {
             { label: 'Cumplidas',  value: completed.length, color: 'text-emerald-600' },
             { label: 'Ahorrado',   value: fmt(goals.reduce((s, g) => s + g.current_amount, 0)), color: 'text-gray-900' },
           ].map(s => (
-            <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-              <p className="text-xs text-gray-400">{s.label}</p>
-              <p className={`font-bold text-base mt-0.5 ${s.color}`}>{s.value}</p>
+            <div key={s.label} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-3 text-center">
+              <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400">{s.label}</p>
+              <p className={`font-mono font-black text-base mt-0.5 ${s.color}`}>{s.value}</p>
             </div>
           ))}
         </div>
@@ -279,7 +279,7 @@ export function Metas() {
           : null
         const monthlyNeeded = monthsLeft ? remaining / monthsLeft : null
         return (
-          <div key={g.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+          <div key={g.id} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className={`w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 ${META_COLOR_TINT_CLASSES[colorIdx(g.color)]}`}>
@@ -314,27 +314,30 @@ export function Metas() {
 
             {/* Progress bar with milestone ticks */}
             <div className="relative mb-2">
-              <div className="bg-gray-100 rounded-full h-3 overflow-hidden">
+              <div className="border border-ink/20 rounded-full h-3 overflow-hidden bg-white">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${META_COLOR_CLASSES[colorIdx(g.color)]}`}
+                  className="h-full rounded-full transition-all duration-500 bg-gold"
                   style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${Math.min(ratio * 100, 100)}%` }}
                 />
               </div>
-              {[25, 50, 75].map(mark => (
+              {[
+                { mark: 25, leftClass: 'left-1/4' },
+                { mark: 50, leftClass: 'left-1/2' },
+                { mark: 75, leftClass: 'left-3/4' },
+              ].map(({ mark, leftClass }) => (
                 <div
                   key={mark}
-                  className={`absolute top-0 h-3 w-px ${pct >= mark ? 'bg-white/50' : 'bg-gray-300/70'}`}
-                  style={{ /* GGA exception: dynamic percentage position requires inline style */ left: `${mark}%` }}
+                  className={`absolute top-0 h-3 w-px ${leftClass} ${pct >= mark ? 'bg-white/50' : 'bg-gray-300/70'}`}
                 />
               ))}
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">{fmt(g.current_amount)} ahorrado</span>
-              <span className={`font-semibold ${META_TEXT_CLASSES[colorIdx(g.color)]}`}>{pct}%</span>
+              <span className="font-mono font-black text-ink">{fmt(g.current_amount)} <span className="text-gray-400 font-normal text-xs">ahorrado</span></span>
+              <span className="font-mono font-black text-[11px] text-ink">{pct}%</span>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-0.5">
-              <span>Falta: {fmt(remaining)}</span>
-              <span>Objetivo: {fmt(g.target_amount)}</span>
+              <span>Falta: <span className="font-mono font-black text-ink">{fmt(remaining)}</span></span>
+              <span className="font-mono text-gray-400">{fmt(g.target_amount)}</span>
             </div>
 
             {/* Monthly calc */}
@@ -353,7 +356,7 @@ export function Metas() {
       {completed.length > 0 && (
         <div>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Cumplidas</h2>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
               {completed.map(g => (
                 <div key={g.id} className="flex items-center gap-3 px-4 py-3.5">
@@ -362,7 +365,7 @@ export function Metas() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{g.name}</p>
-                    <p className="text-xs text-gray-400">{fmt(g.current_amount)} · Meta cumplida 🎉</p>
+                    <p className="text-xs text-gray-400 font-mono">{fmt(g.current_amount)} · <span className="font-mono text-[9px] tracking-[2px] uppercase bg-gold border border-ink px-1.5 py-0.5 rounded-full text-ink">cumplida</span></p>
                   </div>
                   <button onClick={() => remove(g.id)}
                     className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-300 hover:text-red-500 transition">

@@ -29,7 +29,7 @@ function RingProgress({ ratio, color, size = 56, strokeWidth = 6 }) {
   const pct = Math.round(ratio * 100)
   return (
     <div className="relative flex-shrink-0" style={{ /* GGA exception: size is runtime-computed */ width: size, height: size }}>
-      <svg width={size} height={size} style={{ /* GGA exception: SVG rotation has no Tailwind equivalent */ transform: 'rotate(-90deg)' }}>
+      <svg width={size} height={size} className="-rotate-90">
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#f3f4f6" strokeWidth={strokeWidth} />
         <circle
           cx={size / 2} cy={size / 2} r={r} fill="none" stroke={stroke}
@@ -56,12 +56,12 @@ function ratioColor(ratio) {
 
 function ProgressBar({ spent, limit, thick = false }) {
   const ratio = limit > 0 ? spent / limit : 0
-  const { bar } = ratioColor(ratio)
+  const isOver = ratio >= 0.8
+  const widthPct = Math.min(Math.round(ratio * 100), 100)
   return (
-    <div className={`bg-gray-100 rounded-full overflow-hidden ${thick ? 'h-3' : 'h-1.5'}`}>
+    <div className={`border border-ink/20 rounded-full overflow-hidden bg-white ${thick ? 'h-3' : 'h-1.5'}`}>
       <div
-        className={`h-full rounded-full transition-all ${bar}`}
-        style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${Math.min(ratio * 100, 100)}%` }}
+        className={`h-full rounded-full transition-all w-[${widthPct}%] ${isOver ? 'bg-red-500' : 'bg-gold'}`}
       />
     </div>
   )
@@ -294,7 +294,7 @@ export function Presupuestos() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Presupuestos</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Presupuestos</h1>
           <p className="text-gray-500 text-sm capitalize">{mes}</p>
         </div>
         <Button onClick={() => setModal({})} size="md">
@@ -318,8 +318,8 @@ export function Presupuestos() {
                   <IconTarget size={14} className={text} />
                   <span className={`text-xs font-semibold uppercase tracking-wide ${text}`}>Presupuesto general</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900">{fmt(spent)}</p>
-                <p className="text-sm text-gray-500">de {fmt(generalBudget.amount)} este mes</p>
+                <p className="text-2xl font-mono font-black text-ink">{fmt(spent)}</p>
+                <p className="text-sm text-gray-500">de <span className="font-mono font-black">{fmt(generalBudget.amount)}</span> este mes</p>
               </div>
               <div className="flex flex-col gap-1 flex-shrink-0">
                 <button onClick={() => setModal(generalBudget)}
@@ -356,11 +356,11 @@ export function Presupuestos() {
       {/* Distribución & Impacto */}
       {categoryBudgets.length > 0 && (
         <div>
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Distribución &amp; Impacto</h2>
+          <h2 className="font-display font-bold text-ink text-sm uppercase tracking-[2px] mb-3">Distribución &amp; Impacto</h2>
 
           {/* Stacked allocation bar */}
           {totalCategoryBudget > 0 && (
-            <div className="mb-3 bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+            <div className="mb-3 bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4">
               <p className="text-xs font-medium text-gray-500 mb-2">Distribución del presupuesto</p>
               <div className="h-3 rounded-full overflow-hidden flex">
                 {categoryBudgets.map((b, i) => (
@@ -386,7 +386,7 @@ export function Presupuestos() {
             </div>
           )}
 
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
               {categoryBudgets.map((b, i) => {
                 const cat = categories.find(c => c.id === b.category_id)
@@ -408,7 +408,7 @@ export function Presupuestos() {
                             <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ /* GGA exception: identity dot color from dynamic chart palette */ backgroundColor: color }} />
                             <p className="text-sm font-semibold text-gray-900 truncate">{cat.name}</p>
                           </div>
-                          <p className="text-xs text-gray-400">{fmt(spent)} <span className="text-gray-300">de</span> {fmt(b.amount)}</p>
+                          <p className="text-xs text-gray-400 font-mono font-black">{fmt(spent)} <span className="text-gray-300 font-normal">de</span> {fmt(b.amount)}</p>
                           {/* Allocation bar — shows how big this budget is relative to others */}
                           <div className="mt-1.5 h-1 bg-gray-100 rounded-full overflow-hidden">
                             <div className="h-full rounded-full" style={{ /* GGA exception: color and width from dynamic data */ width: `${Math.min(allocationPct, 100)}%`, backgroundColor: color, opacity: 0.5 }} />
@@ -471,7 +471,7 @@ export function Presupuestos() {
       {unbudgeted.length > 0 && (
         <div>
           <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Sin presupuesto asignado</h2>
-          <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden">
             <div className="divide-y divide-gray-50">
               {unbudgeted.map(c => {
                 const subIds = categories.filter(s => s.parent_id === c.id).map(s => s.id)

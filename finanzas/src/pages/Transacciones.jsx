@@ -20,7 +20,7 @@ function FormRow({ label, onClick, children }) {
       onClick={onClick}
       className={`flex items-center min-h-[52px] border-b border-gray-100 last:border-0 gap-4 ${onClick ? 'cursor-pointer hover:bg-gray-50 rounded-lg -mx-1 px-1' : ''}`}
     >
-      <span className="text-sm text-gray-400 w-24 flex-shrink-0">{label}</span>
+      <span className="text-[10px] font-mono tracking-[1.5px] uppercase text-gray-400 w-24 flex-shrink-0">{label}</span>
       <div className="flex-1 flex items-center gap-2 min-w-0">{children}</div>
     </div>
   )
@@ -64,9 +64,9 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
     setSaving(false)
   }
 
-  const typeBtn = (t, label, activeClass) => (
+  const typeBtn = (t, label) => (
     <button type="button" onClick={() => { setType(t); setCategoryId('') }}
-      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === t ? `bg-white shadow-sm ${activeClass}` : 'text-gray-400'}`}>
+      className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === t ? 'bg-ink text-gold font-black' : 'text-gray-400'}`}>
       {label}
     </button>
   )
@@ -74,10 +74,10 @@ function TransactionForm({ initial, categories, paymentMethods, onSave, onCancel
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <div className="flex gap-1 p-1 bg-gray-100 rounded-xl mb-5">
-          {typeBtn('expense', 'Egreso', 'text-red-600')}
-          {typeBtn('income', 'Ingreso', 'text-emerald-600')}
-          {typeBtn('transfer', 'Transferencia', 'text-primary-600')}
+        <div className="flex gap-1 p-1 bg-ink/10 rounded-xl border border-ink/20 mb-5">
+          {typeBtn('expense', 'Egreso')}
+          {typeBtn('income', 'Ingreso')}
+          {typeBtn('transfer', 'Transferencia')}
         </div>
 
         <div className="mb-5">
@@ -348,7 +348,7 @@ export function Transacciones() {
     <div className="p-6 space-y-5 max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Transacciones</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Transacciones</h1>
           <p className="text-gray-500 text-sm">Registrá todos tus movimientos</p>
         </div>
         <div className="flex gap-2">
@@ -365,7 +365,7 @@ export function Transacciones() {
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex flex-wrap gap-3">
+      <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4 flex flex-wrap gap-3">
         <Input
           className="flex-1 min-w-40"
           placeholder="Buscar..."
@@ -387,9 +387,9 @@ export function Transacciones() {
           { label: 'Egresos', value: fmt(totalExpense), color: 'text-red-500' },
           { label: 'Balance', value: fmt(totalIncome - totalExpense), color: totalIncome - totalExpense >= 0 ? 'text-primary-600' : 'text-orange-500' },
         ].map(s => (
-          <div key={s.label} className="bg-white rounded-xl border border-gray-100 shadow-sm p-3 text-center">
-            <p className="text-xs text-gray-400">{s.label}</p>
-            <p className={`font-bold text-base ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-3 text-center">
+            <p className="text-[10px] font-mono tracking-[1.5px] uppercase text-gray-400">{s.label}</p>
+            <p className={`font-mono font-black text-base ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
@@ -404,7 +404,7 @@ export function Transacciones() {
           <p>Sin transacciones para mostrar</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden">
           <div className="divide-y divide-gray-50">
             {displayList.map(t => {
               const isTransfer = !!t.transfer_group_id
@@ -417,7 +417,7 @@ export function Transacciones() {
               const toPM   = isTransfer && t.type === 'income'  ? pm : (partner ? paymentMethods.find(m => m.id === partner.payment_method_id) : null)
 
               return (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
+                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-[#FFF8E0] transition">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isTransfer ? 'bg-primary-50' : t.type === 'income' ? 'bg-emerald-50' : 'bg-red-50'}`}>
                     {isTransfer
                       ? <IconArrowsLeftRight size={18} className="text-primary-500" />
@@ -433,7 +433,7 @@ export function Transacciones() {
                       {' · '}{format(new Date(t.date), 'dd MMM yyyy', { locale: es })}
                     </p>
                   </div>
-                  <span className={`font-bold text-sm ${isTransfer ? 'text-primary-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
+                  <span className={`font-mono font-black text-sm ${isTransfer ? 'text-primary-600' : t.type === 'income' ? 'text-emerald-600' : 'text-red-500'}`}>
                     {isTransfer ? '' : (t.type === 'income' ? '+' : '-')}{fmt(t.amount)}
                   </span>
                   <div className="flex gap-0.5">

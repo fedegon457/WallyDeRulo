@@ -1,9 +1,9 @@
 export function Button({ children, variant = 'primary', size = 'md', className = '', ...props }) {
-  const base = 'inline-flex items-center justify-center font-bold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95'
+  const base = 'inline-flex items-center justify-center font-bold rounded-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed active:translate-y-0.5 active:shadow-none'
 
   const variants = {
-    primary:   'bg-primary-500 text-primary-800 hover:bg-primary-600 focus:ring-primary-400 shadow-sm',
-    secondary: 'bg-white text-gray-700 border-2 border-gray-200 hover:border-gray-300 hover:bg-gray-50 focus:ring-gray-300',
+    primary:   'bg-ink text-gold hover:bg-ink/90 focus:ring-ink shadow-brutal-sm rounded-xl border-2 border-ink',
+    secondary: 'bg-white text-ink border-2 border-ink hover:bg-[#FFF8E0] focus:ring-ink shadow-brutal-sm',
     danger:    'bg-red-500 text-white hover:bg-red-600 focus:ring-red-400',
     ghost:     'text-gray-600 hover:bg-gray-100 focus:ring-gray-300',
     success:   'bg-green-500 text-white hover:bg-green-600 focus:ring-green-400',

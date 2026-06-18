@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { IconX, IconChevronRight } from '@tabler/icons-react'
+import { IconChevronRight } from '@tabler/icons-react'
 import { supabase } from '../../lib/supabase'
 import { useAuth, isDemo } from '../../contexts/AuthContext'
 import { demoCategories, demoPaymentMethods } from '../../lib/demoData'
@@ -8,6 +8,7 @@ import { AmountInput } from './Input'
 import { CategorySheet } from './CategorySheet'
 import { PaymentMethodSheet } from './PaymentMethodSheet'
 import { IconDisplay } from './EmojiPicker'
+import { ChromeBar } from './ChromeBar'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 
@@ -15,9 +16,9 @@ function FormRow({ label, onClick, children }) {
   return (
     <div
       onClick={onClick}
-      className={`flex items-center min-h-[52px] border-b border-gray-100 last:border-0 gap-4 ${onClick ? 'cursor-pointer active:bg-gray-50 -mx-5 px-5' : ''}`}
+      className={`flex items-center min-h-[52px] border-b border-gray-100 last:border-0 gap-4 ${onClick ? 'cursor-pointer active:bg-[#FFF8E0] -mx-5 px-5' : ''}`}
     >
-      <span className="text-sm text-gray-400 w-20 flex-shrink-0">{label}</span>
+      <span className="text-[10px] font-mono tracking-[1.5px] uppercase text-gray-400 w-24 flex-shrink-0">{label}</span>
       <div className="flex-1 flex items-center gap-2 min-w-0">{children}</div>
     </div>
   )
@@ -138,27 +139,23 @@ export function QuickAddModal({ open, onClose }) {
     <>
       <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
         <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={handleClose} />
-        <div className="relative bg-white w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl shadow-2xl">
+        <div className="relative bg-paper border-[2.5px] border-ink shadow-brutal overflow-hidden w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl">
 
-          {/* Header con toggle tipo */}
-          <div className="px-5 pt-5 pb-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-gray-900">Nueva transaccion</h2>
-              <button onClick={handleClose} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
-                <IconX size={20} />
-              </button>
-            </div>
-            <div className="flex gap-1 p-1 bg-gray-100 rounded-xl">
+          <ChromeBar title="nueva transacción" onClose={handleClose} />
+
+          {/* Toggle tipo */}
+          <div className="px-5 pt-4 pb-3">
+            <div className="flex gap-1 p-1 bg-ink/10 rounded-xl border border-ink/20">
               <button type="button" onClick={() => { setType('expense'); setCategoryId('') }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'expense' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400'}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'expense' ? 'bg-ink text-gold font-black' : 'text-gray-400'}`}>
                 Egreso
               </button>
               <button type="button" onClick={() => { setType('income'); setCategoryId('') }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'income' ? 'bg-white text-emerald-600 shadow-sm' : 'text-gray-400'}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'income' ? 'bg-ink text-gold font-black' : 'text-gray-400'}`}>
                 Ingreso
               </button>
               <button type="button" onClick={() => { setType('transfer'); setCategoryId('') }}
-                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'transfer' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-400'}`}>
+                className={`flex-1 py-2 rounded-lg text-xs font-semibold transition ${type === 'transfer' ? 'bg-ink text-gold font-black' : 'text-gray-400'}`}>
                 Transf.
               </button>
             </div>
@@ -166,10 +163,10 @@ export function QuickAddModal({ open, onClose }) {
 
           {saved ? (
             <div className="px-5 pb-8 pt-2 flex flex-col items-center gap-3">
-              <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center text-3xl">&#10003;</div>
-              <p className="text-emerald-700 font-semibold">Guardado!</p>
+              <div className="w-14 h-14 bg-gold rounded-full border-2 border-ink shadow-brutal-sm flex items-center justify-center text-3xl">&#10003;</div>
+              <p className="text-ink font-semibold">Guardado!</p>
               <Button variant="secondary" onClick={handleClose} className="w-full">Cerrar</Button>
-              <button onClick={reset} className="text-sm text-primary-600 hover:underline">Agregar otro</button>
+              <button onClick={reset} className="text-sm text-ink/60 hover:underline">Agregar otro</button>
             </div>
           ) : (
             <form onSubmit={handleSubmit}>

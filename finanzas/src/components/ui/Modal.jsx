@@ -1,5 +1,5 @@
-import { IconX } from '@tabler/icons-react'
 import { useEffect } from 'react'
+import { ChromeBar } from './ChromeBar'
 
 export function Modal({ open, onClose, title, children, size = 'md' }) {
   useEffect(() => {
@@ -15,15 +15,10 @@ export function Modal({ open, onClose, title, children, size = 'md' }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={onClose} />
-      <div className={`relative bg-white/90 backdrop-blur-2xl rounded-2xl shadow-2xl w-full ${sizes[size]} max-h-[90vh] flex flex-col border border-white/40`}>
-        <div className="flex items-center justify-between px-5 py-4 border-b-2 border-gray-100">
-          <h2 className="text-lg font-extrabold text-gray-900">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-1.5 rounded-xl hover:bg-gray-100 text-gray-400 hover:text-gray-700 transition"
-          >
-            <IconX size={20} />
-          </button>
+      <div className={`relative bg-paper border-[2.5px] border-ink shadow-brutal overflow-hidden rounded-2xl w-full ${sizes[size]} max-h-[90vh] flex flex-col`}>
+        <ChromeBar title={title} onClose={onClose} />
+        <div className="px-5 py-3 border-b border-ink/10">
+          <h2 className="text-base font-black text-ink font-display">{title}</h2>
         </div>
         <div className="overflow-y-auto flex-1 p-5">{children}</div>
       </div>

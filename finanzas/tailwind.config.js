@@ -6,6 +6,8 @@ export default {
     extend: {
       fontFamily: {
         sans: ['Outfit', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'ui-monospace', 'monospace'],
       },
       colors: {
         primary: {
@@ -32,6 +34,8 @@ export default {
         'primary': '0 4px 20px 0 rgba(186,232,232,0.50)',
         'accent':  '0 4px 16px 0 rgba(255,216,3,0.40)',
         'bold':    '4px 4px 0px rgba(0,0,0,0.12)',
+        'brutal':    '6px 6px 0 #1a1a1a',
+        'brutal-sm': '3px 3px 0 #1a1a1a',
       },
     },
   },

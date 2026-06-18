@@ -483,7 +483,7 @@ export function GastosFijos() {
     <div className="p-6 space-y-5 max-w-2xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gastos Fijos</h1>
+          <h1 className="font-display font-black text-ink text-2xl">Gastos Fijos</h1>
           <p className="text-gray-500 text-sm capitalize">{mes}</p>
         </div>
         <Button onClick={() => setShowPicker(true)} size="md">
@@ -525,7 +525,7 @@ export function GastosFijos() {
           return (
             <div key={e.id} className={`flex items-center overflow-hidden transition ${done ? 'opacity-50' : ''}`}>
               <div className="w-1 self-stretch flex-shrink-0" style={{ /* GGA exception: urgency color from computed barColor */ backgroundColor: barColor }} />
-              <div className={`flex items-center gap-3 flex-1 px-3.5 py-3.5 ${done ? '' : 'hover:bg-orange-50/30'}`}>
+              <div className={`flex items-center gap-3 flex-1 px-3.5 py-3.5 ${done ? '' : 'hover:bg-[#FFF8E0]'}`}>
                 <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${done ? 'bg-emerald-50' : 'bg-orange-50'}`}>
                   {(e.icon || cat?.icon)
                     ? <IconDisplay icon={e.icon || cat?.icon} size={24} />
@@ -540,9 +540,9 @@ export function GastosFijos() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  <p className={`text-sm font-bold ${done ? 'text-gray-400' : 'text-gray-900'}`}>{fmt(e.amount)}</p>
+                  <p className={`text-sm font-mono font-black ${done ? 'text-gray-400' : 'text-ink'}`}>{fmt(e.amount)}</p>
                   {done ? (
-                    <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1.5 rounded-lg whitespace-nowrap">✓ Listo</span>
+                    <span className="font-mono text-[9px] tracking-[2px] uppercase px-2 py-0.5 rounded-full border border-ink bg-[#FFF8E0] text-ink/70 whitespace-nowrap">✓ Listo</span>
                   ) : (
                     <button
                       onClick={() => setPayModal(e)}
@@ -568,7 +568,7 @@ export function GastosFijos() {
         return (
           <div className="space-y-4">
             {/* Arc hero */}
-            <div className="bg-white rounded-xl border border-primary-100 shadow-card p-4">
+            <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4">
               <div className="flex items-center gap-4">
                 <div className="flex flex-col items-center flex-shrink-0 w-24">
                   <div className="relative w-24 h-[52px]">
@@ -605,7 +605,7 @@ export function GastosFijos() {
                   <span className="font-semibold text-emerald-600">{pct}%</span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ /* GGA exception: dynamic percentage width requires inline style */ width: `${pct}%` }} />
+                  <div className={`h-full bg-emerald-500 rounded-full transition-all duration-500 w-[${pct}%]`} />
                 </div>
               </div>
             </div>
@@ -613,7 +613,7 @@ export function GastosFijos() {
             {todayGroup.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-2">Hoy</p>
-                <div className="bg-white rounded-xl border border-red-100 shadow-sm overflow-hidden divide-y divide-red-50">
+                <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden divide-y divide-ink/10">
                   {todayGroup.map(e => renderRow(e, '#ef4444', 'bg-red-500 hover:bg-red-600 text-white'))}
                 </div>
               </div>
@@ -621,7 +621,7 @@ export function GastosFijos() {
             {weekGroup.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-amber-500 uppercase tracking-wide mb-2">Esta semana</p>
-                <div className="bg-white rounded-xl border border-amber-100 shadow-sm overflow-hidden divide-y divide-amber-50">
+                <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden divide-y divide-ink/10">
                   {weekGroup.map(e => renderRow(e, '#f59e0b', 'bg-amber-500 hover:bg-amber-600 text-white'))}
                 </div>
               </div>
@@ -629,7 +629,7 @@ export function GastosFijos() {
             {laterGroup.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-primary-600 uppercase tracking-wide mb-2">Más adelante</p>
-                <div className="bg-white rounded-xl border border-primary-100 shadow-sm overflow-hidden divide-y divide-primary-50">
+                <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden divide-y divide-ink/10">
                   {laterGroup.map(e => renderRow(e, '#bae8e8', 'bg-primary-600 hover:bg-primary-700 text-primary-800'))}
                 </div>
               </div>
@@ -637,7 +637,7 @@ export function GastosFijos() {
             {paidGroup.length > 0 && (
               <div>
                 <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wide mb-2">Pagados</p>
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden divide-y divide-gray-50">
+                <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden divide-y divide-ink/10">
                   {paidGroup.map(e => renderRow(e, '#10b981', ''))}
                 </div>
               </div>

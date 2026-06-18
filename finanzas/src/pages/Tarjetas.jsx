@@ -607,12 +607,12 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
   ]
 
   return (
-    <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+    <div className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm overflow-hidden">
       <div className="flex border-b border-gray-100 overflow-x-auto">
         {TABS.map(({ key, label, icon: Icon }) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 transition -mb-px ${
-              tab === key ? 'border-primary-600 text-primary-700' : 'border-transparent text-gray-500 hover:text-gray-700'
+            className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-[2.5px] transition -mb-px ${
+              tab === key ? 'bg-gold border-b-[2.5px] border-ink text-ink font-black' : 'border-transparent text-gray-400 hover:text-ink'
             }`}>
             <Icon size={14} />{label}
           </button>
@@ -661,7 +661,7 @@ function CardDetail({ card, transactions, statements, accounts, onNewStatement, 
                       <p className="text-xs text-gray-400">{fmtDate(t.date)}</p>
                     </div>
                     <div className="flex-shrink-0 text-right">
-                      <span className="text-sm font-semibold text-red-500">{fmtTx(t)}</span>
+                      <span className="text-sm font-mono font-black text-red-500">{fmtTx(t)}</span>
                       {t.currency === 'USD' && (
                         <span className="block text-[10px] text-green-600 font-medium">USD</span>
                       )}
@@ -958,21 +958,21 @@ export function Tarjetas() {
   return (
     <div className="p-4 sm:p-6 space-y-6 max-w-5xl mx-auto">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Tarjetas</h1>
+        <h1 className="font-display font-black text-ink text-2xl">Tarjetas</h1>
         <p className="text-gray-500 text-sm">Gestion de tarjetas de credito</p>
       </div>
 
       {/* ── Resumen global ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Ciclos actuales', value: cycleLabel, color: 'text-orange-600', bg: 'bg-orange-50' },
-          { label: 'Resumenes pendientes', value: fmt(totalPending), color: 'text-red-600', bg: 'bg-red-50' },
-          { label: 'Proximo vencimiento', value: nextDueSt ? fmtDate(nextDueSt.due_date) : '-', color: nextDueSt && daysUntil(nextDueSt.due_date) <= 5 ? 'text-red-600' : 'text-gray-900', bg: 'bg-gray-50' },
-          { label: 'Cuotas restantes', value: fmt(totalInstallmentsRemaining), color: 'text-primary-600', bg: 'bg-primary-50' },
+          { label: 'Ciclos actuales', value: cycleLabel, color: 'text-orange-600' },
+          { label: 'Resumenes pendientes', value: fmt(totalPending), color: 'text-red-600' },
+          { label: 'Proximo vencimiento', value: nextDueSt ? fmtDate(nextDueSt.due_date) : '-', color: nextDueSt && daysUntil(nextDueSt.due_date) <= 5 ? 'text-red-600' : 'text-ink' },
+          { label: 'Cuotas restantes', value: fmt(totalInstallmentsRemaining), color: 'text-ink' },
         ].map(s => (
-          <div key={s.label} className={`${s.bg} rounded-xl p-4`}>
-            <p className="text-xs text-gray-500 mb-1">{s.label}</p>
-            <p className={`font-bold text-base ${s.color}`}>{s.value}</p>
+          <div key={s.label} className="bg-paper rounded-2xl border-[2px] border-ink shadow-brutal-sm p-4">
+            <p className="text-[10px] font-mono tracking-[2px] uppercase text-gray-400 mb-1">{s.label}</p>
+            <p className={`font-mono font-black text-base ${s.color}`}>{s.value}</p>
           </div>
         ))}
       </div>
