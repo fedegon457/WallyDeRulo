@@ -8,8 +8,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -38,23 +36,7 @@ jobs:
             exit 1
           fi
           printf 'VITE_SUPABASE_URL=%s\nVITE_SUPABASE_ANON_KEY=%s\n' "$VITE_SUPABASE_URL" "$VITE_SUPABASE_ANON_KEY" > .env
-          echo "NODE: $(node --version) NPM: $(npm --version)"
-          set +e
-          npm run build > /tmp/build_output.txt 2>&1
-          BUILD_EXIT=$?
-          set -e
-          echo "BUILD EXIT: $BUILD_EXIT"
-          tail -5 /tmp/build_output.txt
-          if [ $BUILD_EXIT -ne 0 ]; then
-            git config user.email "ci@ci.com"
-            git config user.name "CI"
-            cp /tmp/build_output.txt build-error-log.txt
-            git add -f build-error-log.txt
-            git commit -m "ci: build error log [skip ci]" || true
-            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/fedegon457/WallyDeRulo.git"
-            git push origin HEAD:build-debug --force || echo "Push failed"
-          fi
-          exit $BUILD_EXIT
+          npm run build
 
       - name: Deploy to server
         working-directory: finanzas
